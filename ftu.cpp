@@ -98,7 +98,7 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         // datagram.packetIndex = packetsToSend[i];
         // datagram.packet = packet;
         stringstream piStrStream;
-        piStrStream << sendSize;
+        piStrStream << i;
         string piStr = piStrStream.str();
         const char* piCharStar = piStr.c_str();
         char *msg = const_cast<char *>(piCharStar);
@@ -117,7 +117,9 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
 
         cout << "msg: " << msg << endl;
 
-        int sent = sendto(udpFd, msg, sizeof msg, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
+        int msgLength = sendSize + piStr.length() + 1;
+
+        int sent = sendto(udpFd, msg, msgLength, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
         cout << "bytes sent: " << sent << endl;
     }
 }
