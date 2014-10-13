@@ -52,17 +52,21 @@ vector<int> parseMissedPackets(string &missedPacketsMsg)
     string missedPacketsCopy(missedPacketsMsg);
     vector<int> missedPackets;
 
+    cout << "parsing missed packets!" << endl;
     while(true){
         int nextSpacePos = missedPacketsCopy.find(" ");
-        int nextPacket = stoi(missedPacketsCopy.substr(0, nextSpacePos));
-
-        missedPackets.push_back(nextPacket);
 
         if (nextSpacePos == -1){
             break;
         } else {
             missedPacketsCopy = missedPacketsCopy.substr(nextSpacePos+1);
         }
+
+        int nextPacket = stoi(missedPacketsCopy.substr(0, nextSpacePos));
+
+        missedPackets.push_back(nextPacket);
+
+        
     }
 
     return missedPackets;
@@ -100,8 +104,8 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         char *msg = const_cast<char *>(piCharStar);
         // char *msg;
         // strncpy(msg, piCharStar, piStr.length());
-        // strcat(msg, " ");
-        // strcat(msg, packet);
+        strcat(msg, " ");
+        strcat(msg, packet);
         
         // char *msg = itoa(sendSize);
         // strcat(msg, " ");
@@ -111,7 +115,9 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         //cout << "udpInfo port " << udpInfo->sin_port << endl;
         //cout << "udpInfo s_addr " << udpInfo->sin_addr.s_addr << endl;
 
-        int sent = sendto(udpFd, &msg, sizeof msg, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
+        cout << "msg: " << msg << endl;
+
+        int sent = sendto(udpFd, msg, sizeof msg, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
         cout << "bytes sent: " << sent << endl;
     }
 }
