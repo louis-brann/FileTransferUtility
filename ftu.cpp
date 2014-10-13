@@ -24,6 +24,7 @@ using namespace std;
 const int CONNECTIONS_ALLOWED = 1;
 const char *TCP_PORT = "44000";
 const char *UDP_PORT = "44001";
+const int WINDOW_SIZE = 30;
 const bool postMsg = 1;
 const int packetSize = 1500;
 bool allPacketsSignal = 0;
@@ -106,14 +107,6 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         // strncpy(msg, piCharStar, piStr.length());
         strcat(msg, " ");
         strcat(msg, packet);
-        
-        // char *msg = itoa(sendSize);
-        // strcat(msg, " ");
-        // strcat(msg, packet);
-
-        //cout << "file descriptor: " << udpFd << endl;
-        //cout << "udpInfo port " << udpInfo->sin_port << endl;
-        //cout << "udpInfo s_addr " << udpInfo->sin_addr.s_addr << endl;
 
         cout << "msg: " << msg << endl;
 
@@ -138,27 +131,26 @@ void *tcpReceive(void *arg)
 int receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
 {
     cout << "receiving packet" << endl;
-    //dgram_t datagram;
-    char msg[packetSize];
-    socklen_t udpInfoSize = sizeof udpInfo;
+    
+    // reserve space to represent any index in window, plus a separating space
+    int windowDigits = log10(WINDOW_SIZE) + 1;
+    char msg[packetSize + windowDigits + 1];
+    
+    // Receive the message
     int received = recvfrom(udpFd, msg, sizeof(msg), 0, udpInfo->ai_addr, &udpInfo->ai_addrlen);
-    cout << "received " << received << " bytes" << endl;
-
-    cout << "raw msg: " << msg << endl;
     msg[received] = 0;
 
-    cout << "msg terminated: " << msg << endl;
-
+    // Separate packet index from rest of string
     string msgStr(msg);
     int spacePos = msgStr.find(" ");
     string piStr = msgStr.substr(0, spacePos);
-
-    cout << "piStr: " << piStr << endl;
     int packetIndex = stoi(piStr);
-    char *receivedPacket = const_cast<char *>(msgStr.substr(spacePos+1).c_str());
-    cout << "received packet: " << receivedPacket << endl;
 
+    // Convert string to cstr to copy into array of packetes
+    string actualMsg = msgStr.substr(spacePos+1);
+    char *receivedPacket = const_cast<char *>(actualMsg.c_str());
     strncpy( receivedPackets[packetIndex] , receivedPacket, msgStr.length() - spacePos - 1);
+    cout << "received " << received << " bytes" << endl;
     cout << "received packet: " << receivedPackets[0] << endl;
 
     return received;
