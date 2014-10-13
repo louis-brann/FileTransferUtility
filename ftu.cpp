@@ -107,12 +107,16 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         const char* piCharStar = piStr.c_str();
         char *pi = const_cast<char *>(piCharStar);
 
+        cout << "i is " << i << endl;
+        cout << "pi is " << pi << endl;
+
         // Make msg in correct format (do the c-dance!)
         char *msg;
         if ((msg = (char *)malloc(msgLength)) != NULL)
         {
             msg[0] = '\0';
             strcat(msg, pi);
+            strcat(msg, " ");
             strcat(msg, packet);
         }
    
@@ -121,6 +125,7 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         // strcat(msg, packet);
 
         cout << "sendSize: " << sendSize << endl;
+        cout << "msg: " << msg << endl;
 
         // Send msg
         int sent = sendto(udpFd, msg, msgLength, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
@@ -559,9 +564,12 @@ int main(int argc, const char* argv[])
             sendPackets(myFile, udpFd, udpInfo, packetsToSend, totalPackets, length);
 
             cout << "1 set of udp packets sent!" << endl;
+            usleep(1000000);
 
             // TCP: Done sending
             send(tcpFd, &postMsg, sizeof postMsg, 0);
+
+
 
             // TCP: Receive missed packets message
             string missedPackets;
