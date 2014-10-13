@@ -24,6 +24,7 @@ using namespace std;
 const int CONNECTIONS_ALLOWED = 1;
 const char *TCP_PORT = "44000";
 const char *UDP_PORT = "44001";
+const int WINDOW_SIZE = 30;
 const bool postMsg = 1;
 const int packetSize = 1500;
 bool allPacketsSignal = 0;
@@ -76,35 +77,40 @@ vector<int> parseMissedPackets(string &missedPacketsMsg)
 void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<int> &packetsToSend, int &totalPackets, int &length)
 {
     int numPacketsToSend = packetsToSend.size();
-    cout << "numPacketsToSend: " << numPacketsToSend << endl;
     char *msg;
+    // For one window, send each packet
     for (int i = 0; i < numPacketsToSend; ++i)
     {
         cout << "starting forloop" << endl;
+        // Set the infile to the correct place
         char packet[packetSize];
         infile.seekg(packetsToSend[i] * packetSize);
         int sendSize = packetSize;
 
+        // Get packet index
         stringstream piStrStream;
         int packetIndex = i;
         piStrStream << packetIndex;
         string piStr = piStrStream.str();
 
-        int msgLength = sendSize + piStr.length() + 1;
-
+        // Update sendSize if last packet
         if (packetsToSend[i] + 1 == totalPackets)
         {
             sendSize = length % packetSize;
         }
         
+        int msgLength = sendSize + piStr.length() + 1;
+
+        // Read in data from file
         infile.read(packet, sendSize);
 
+        // Make msg in correct format (do the c-dance!)
         const char* piCharStar = piStr.c_str();
-
         msg = const_cast<char *>(piCharStar);
         strcat(msg, " ");
         strcat(msg, packet);
 
+        // Send msg
         int sent = sendto(udpFd, msg, msgLength, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
         cout << "bytes sent: " << sent << endl;
     }
@@ -124,27 +130,26 @@ void *tcpReceive(void *arg)
 int receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
 {
     cout << "receiving packet" << endl;
-    //dgram_t datagram;
-    char msg[packetSize];
-    socklen_t udpInfoSize = sizeof udpInfo;
+    
+    // reserve space to represent any index in window, plus a separating space
+    int windowDigits = log10(WINDOW_SIZE) + 1;
+    char msg[packetSize + windowDigits + 1];
+    
+    // Receive the message
     int received = recvfrom(udpFd, msg, sizeof(msg), 0, udpInfo->ai_addr, &udpInfo->ai_addrlen);
-    cout << "received " << received << " bytes" << endl;
-
-    cout << "raw msg: " << msg << endl;
     msg[received] = 0;
 
-    cout << "msg terminated: " << msg << endl;
-
+    // Separate packet index from rest of string
     string msgStr(msg);
     int spacePos = msgStr.find(" ");
     string piStr = msgStr.substr(0, spacePos);
-
-    cout << "piStr: " << piStr << endl;
     int packetIndex = stoi(piStr);
-    char *receivedPacket = const_cast<char *>(msgStr.substr(spacePos+1).c_str());
-    cout << "received packet: " << receivedPacket << endl;
 
+    // Convert string to cstr to copy into array of packetes
+    string actualMsg = msgStr.substr(spacePos+1);
+    char *receivedPacket = const_cast<char *>(actualMsg.c_str());
     strncpy( receivedPackets[packetIndex] , receivedPacket, msgStr.length() - spacePos - 1);
+    cout << "received " << received << " bytes" << endl;
     cout << "received packet: " << receivedPackets[0] << endl;
 
     return received;
