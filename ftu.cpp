@@ -17,8 +17,8 @@
 #include <fstream>
 #include <pthread.h>
 #include <vector>
+#include <sstream>
 #include <math.h>
-#include <tuple>
 using namespace std;
 
 const int CONNECTIONS_ALLOWED = 1;
@@ -33,6 +33,7 @@ typedef struct {
     int totalPackets;
 } tcpReceiverParams_t;
 
+// TODO
 typedef struct {
     int packetIndex;
     char *packet;
@@ -89,17 +90,28 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         
         infile.read(packet, sendSize);
 
-        dgram_t datagram;
-        datagram.packetIndex = packetsToSend[i];
-        datagram.packet = packet;
-
-        cout << "packet pointer: " << &packet << endl;
+        // dgram_t datagram;
+        // datagram.packetIndex = packetsToSend[i];
+        // datagram.packet = packet;
+        stringstream piStrStream;
+        piStrStream << sendSize;
+        string piStr = piStrStream.str();
+        const char* piCharStar = piStr.c_str();
+        char *msg = const_cast<char *>(piCharStar);
+        // char *msg;
+        // strncpy(msg, piCharStar, piStr.length());
+        // strcat(msg, " ");
+        // strcat(msg, packet);
+        
+        // char *msg = itoa(sendSize);
+        // strcat(msg, " ");
+        // strcat(msg, packet);
 
         //cout << "file descriptor: " << udpFd << endl;
         //cout << "udpInfo port " << udpInfo->sin_port << endl;
         //cout << "udpInfo s_addr " << udpInfo->sin_addr.s_addr << endl;
 
-        int sent = sendto(udpFd, &datagram, sizeof datagram, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
+        int sent = sendto(udpFd, &msg, sizeof msg, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
         cout << "bytes sent: " << sent << endl;
     }
 }
@@ -117,12 +129,20 @@ void *tcpReceive(void *arg)
 // Receives totalPackets packets from udp socket, then 
 void receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
 {
-    dgram_t datagram;
+    cout << "receiving packet" << endl;
+    //dgram_t datagram;
+    char msg[packetSize];
     socklen_t udpInfoSize = sizeof udpInfo;
-    int received = recvfrom(udpFd, &datagram, sizeof datagram, 0, (sockaddr *)udpInfo, &udpInfoSize);
-    // datagram[sizeof(int) + received] == '\0';
-    datagram.packet[received] = '\0';
-    receivedPackets[datagram.packetIndex] = datagram.packet;
+    int received = recvfrom(udpFd, msg, sizeof msg, 0, (sockaddr *)udpInfo, &udpInfoSize);
+    msg[received] = '\0';
+    //dgram_t *dgramEditor = &datagram;
+    //dgramEditor[sizeof(int) + received] = '\0';
+    //datagram.packet[received] = '\0';
+    // int packetIndex = atoi(msg.substr(0, msg.find(' ')));
+    char *piStr = nullptr;
+    strncpy(piStr, msg, (strstr(msg, " ") - msg));
+    int packetIndex = atoi(piStr);
+    receivedPackets[packetIndex] = strstr(msg, " ") + 1;
     cout << "received packet: " << receivedPackets[0];
 }
 
