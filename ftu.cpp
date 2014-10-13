@@ -139,17 +139,21 @@ void receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
     //dgram_t datagram;
     char msg[packetSize];
     socklen_t udpInfoSize = sizeof udpInfo;
-    int received = recvfrom(udpFd, msg, sizeof msg, 0, (sockaddr *)udpInfo, &udpInfoSize);
-    msg[received] = '\0';
-    //dgram_t *dgramEditor = &datagram;
-    //dgramEditor[sizeof(int) + received] = '\0';
-    //datagram.packet[received] = '\0';
-    // int packetIndex = atoi(msg.substr(0, msg.find(' ')));
-    char *piStr = nullptr;
-    strncpy(piStr, msg, (strstr(msg, " ") - msg));
-    int packetIndex = atoi(piStr);
+    int received = recvfrom(udpFd, msg, sizeof(msg), 0, udpInfo->ai_addr, &udpInfo->ai_addrlen);
+    cout << "received " << received << " bytes" << endl;
+    msg[received] = 0;
+
+    cout << "msg: " << msg << endl;
+
+    string msgStr(msg);
+    string piStr = msgStr.substr(0, msgStr.find(" "));
+
+    cout << "piStr: " << piStr << endl;
+    int packetIndex = stoi(piStr);
+
+    cout << "done creating msg" << endl;
     receivedPackets[packetIndex] = strstr(msg, " ") + 1;
-    cout << "received packet: " << receivedPackets[0];
+    cout << "received packet: " << receivedPackets[0] << endl;
 }
 
 
