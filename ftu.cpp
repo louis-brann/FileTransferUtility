@@ -18,7 +18,6 @@
 #include <pthread.h>
 #include <vector>
 #include <math.h>
-#include <tuple>
 using namespace std;
 
 const int CONNECTIONS_ALLOWED = 1;
