@@ -116,7 +116,7 @@ void *tcpReceive(void *arg)
 
 
 // Receives totalPackets packets from udp socket, then 
-void receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
+int receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
 {
     cout << "receiving packet" << endl;
     //dgram_t datagram;
@@ -141,6 +141,8 @@ void receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
 
     strncpy( receivedPackets[packetIndex] , receivedPacket, msgStr.length() - spacePos - 1);
     cout << "received packet: " << receivedPackets[0] << endl;
+
+    return received;
 }
 
 
@@ -200,6 +202,19 @@ int main(int argc, const char* argv[])
         // TODO
         cout << "Server: " << servName << endl;
     }
+
+    // Set up the dest file to have the same name as the original file
+    int srcColonPos = source.find(":");
+    string origFileName = "";
+    if (srcColonPos == -1)
+    {
+        origFileName = source;
+    }
+    else 
+    {
+        origFileName = source.substr(srcColonPos+1);
+    }
+    destFile += origFileName;
 
     cout << "Filename: " << destFile << endl;
     
@@ -312,11 +327,17 @@ int main(int argc, const char* argv[])
             uint32_t totalPacketsBuf;
             int received = recv(establishedTcpFd, &totalPacketsBuf, sizeof (uint32_t), 0);
             cout << "bytes received: " << received << endl;
-            cout << "pre change totalPacketsBuf: " << totalPacketsBuf << endl;
-            cout << "pre-cast ntohl(totalPacketsBuf): " << ntohl(totalPacketsBuf) << endl;
             int totalPackets = (int)ntohl(totalPacketsBuf);
 
             cout << "Got num packets: " << totalPackets << endl;
+
+            // TCP: Receive file name
+            int error = recv(establishedTcpFd, &destFile, sizeof(destFile), 0);
+            if (error == -1)
+            {
+                cout << "Error receiving file name" << endl;
+                exit(1);
+            }
 
             // TCP: give the go-ahead
             int goAhead = 1;
@@ -328,6 +349,7 @@ int main(int argc, const char* argv[])
             // UDP: Receive ALL packets
             // TODO: update for buffer not entire file
             int windowOffset = 0;
+            int bytesRead = 0;
             char *receivedPackets[totalPackets];
 
             ofstream outFile;
@@ -353,7 +375,7 @@ int main(int argc, const char* argv[])
                     // If they aren't done sending, receive more packets
                     if (allPacketsSignal == 0) 
                     {   
-                        receivePacket(udpFd, udpInfo, receivedPackets);
+                        bytesRead = receivePacket(udpFd, udpInfo, receivedPackets);
                     } 
                     // Otherwise, send what we're missing
                     else 
@@ -364,6 +386,8 @@ int main(int argc, const char* argv[])
                     }
                 }
 
+                cout << "out of receiving packets loop" << endl;
+
                 // Reap thread from this round of listening
                 if(int err_code = pthread_join(tcpReceiver, NULL))
                 {
@@ -372,14 +396,18 @@ int main(int argc, const char* argv[])
                 }
                 allPacketsSignal = 0;
 
+                cout << "joined pthread" << endl;
+
                 // If the buffer is full, write it to the file
                 if (missingPackets.length() == 0)
                 {
+                    cout << "empty missing packets " << endl;
+                    cout << "total packets: " << totalPackets << endl;
                     // Update to work for buffer (extra offset that gets incremented per file read)   
                     for (int i = 0; i < totalPackets; ++i)
                     {
                         outFile.seekp(windowOffset + i*packetSize);
-                        outFile.write(receivedPackets[i], packetSize);
+                        outFile.write(receivedPackets[i], bytesRead);
                         outFile.close();
                     }
 
@@ -491,6 +519,9 @@ int main(int argc, const char* argv[])
             cout << "totalPacketsBuf: " << totalPacketsBuf << endl;
             int sent = send(tcpFd, &totalPacketsBuf, sizeof totalPackets, 0);
             cout << "bytes sent: " << sent << endl;
+
+            // TCP: Send file name
+            send(tcpFd, &destFile, sizeof destFile, 0);
 
             // TCP: Receive go-ahead response
             int received = recv(tcpFd, &goAhead, sizeof goAhead, 0);
