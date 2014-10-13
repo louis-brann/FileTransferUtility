@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <fstream>
 #include <pthread.h>
 #include <vector>
@@ -253,8 +254,6 @@ int main(int argc, const char* argv[])
 
         cout << "Setup complete. Listening" << endl;
 
-
-
         while(true)
         {
             // TCP: accept connection
@@ -270,8 +269,9 @@ int main(int argc, const char* argv[])
 
 
             // TCP: receive number of packets to be sent
-            int totalPackets;
-            recv(establishedTcpFd, &totalPackets, sizeof totalPackets, 0);
+            uint32_t totalPacketsBuf;
+            recv(establishedTcpFd, &totalPacketsBuf, sizeof (uint32_t), 0);
+            int totalPackets = (int)ntohl(totalPacketsBuf);
 
             cout << "Got num packets: " << totalPackets << endl;
 
@@ -449,7 +449,8 @@ int main(int argc, const char* argv[])
         while (packetsToSend.size() > 0)
         {
             // TCP: Notify of how many packets are about to be sent
-            send(establishedTcpFd, &totalPackets, sizeof totalPackets, 0);
+            uint32_t totalPacketsBuf = htonl(totalPackets);
+            send(establishedTcpFd, &totalPacketsBuf, sizeof totalPackets, 0);
 
             // TCP: Receive go-ahead response
             recv(establishedTcpFd, &goAhead, sizeof goAhead, 0);
