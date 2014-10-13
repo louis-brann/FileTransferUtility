@@ -33,6 +33,11 @@ typedef struct {
     int totalPackets;
 } tcpReceiverParams_t;
 
+typedef struct {
+    int packetIndex;
+    char *packet;
+} dgram_t;
+
 
 void usage() 
 {
@@ -84,7 +89,9 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         
         infile.read(packet, sendSize);
 
-        tuple<int,char*> datagram (packetsToSend[i], packet);
+        dgram_t datagram;
+        datagram.packetIndex = packetsToSend[i];
+        datagram.packet = packet;
 
         sendto(udpFd, &datagram, sizeof datagram, 0, (sockaddr *)udpInfo, sizeof(udpInfo));
     }
@@ -103,11 +110,15 @@ void *tcpReceive(void *arg)
 // Receives totalPackets packets from udp socket, then 
 void receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
 {
-    tuple<int,char*> datagram;
+    dgram_t datagram;
     socklen_t udpInfoSize = sizeof udpInfo;
-    recvfrom(udpFd, &datagram, sizeof datagram, 0, (sockaddr *)udpInfo, &udpInfoSize);
-    receivedPackets[get<0>(datagram)] = get<1>(datagram);
+    int received = recvfrom(udpFd, &datagram, sizeof datagram, 0, (sockaddr *)udpInfo, &udpInfoSize);
+    // datagram[sizeof(int) + received] == '\0';
+    datagram.packet[received] = '\0';
+    receivedPackets[datagram.packetIndex] = datagram.packet;
+    cout << "received packet: " << receivedPackets[0];
 }
+
 
 
 // Loop through buffer checking what packets are missing
