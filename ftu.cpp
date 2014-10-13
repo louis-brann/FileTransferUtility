@@ -76,12 +76,8 @@ vector<int> parseMissedPackets(string &missedPacketsMsg)
 void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<int> &packetsToSend, int &totalPackets, int &length)
 {
     int numPacketsToSend = packetsToSend.size();
-    cout << "numPacketsToSend: " << numPacketsToSend << endl;
-    cout << "about to start sendPackets" << endl;
     for (int i = 0; i < numPacketsToSend; ++i)
     {
-        cout << "sending packet " << i << endl;
-        cout << "contents of packet " << packetsToSend[i] << endl;
         char packet[packetSize];
         infile.seekg(packetsToSend[i] * packetSize);
         int sendSize = packetSize;
@@ -89,33 +85,18 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         if (packetsToSend[i] + 1 == totalPackets)
         {
             sendSize = length % packetSize;
-            cout << "sendSize: " << sendSize << endl;
         }
         
         infile.read(packet, sendSize);
 
-        // dgram_t datagram;
-        // datagram.packetIndex = packetsToSend[i];
-        // datagram.packet = packet;
         stringstream piStrStream;
         piStrStream << i;
         string piStr = piStrStream.str();
         const char* piCharStar = piStr.c_str();
+
         char *msg = const_cast<char *>(piCharStar);
-        // char *msg;
-        // strncpy(msg, piCharStar, piStr.length());
         strcat(msg, " ");
         strcat(msg, packet);
-        
-        // char *msg = itoa(sendSize);
-        // strcat(msg, " ");
-        // strcat(msg, packet);
-
-        //cout << "file descriptor: " << udpFd << endl;
-        //cout << "udpInfo port " << udpInfo->sin_port << endl;
-        //cout << "udpInfo s_addr " << udpInfo->sin_addr.s_addr << endl;
-
-        cout << "msg: " << msg << endl;
 
         int msgLength = sendSize + piStr.length() + 1;
 
