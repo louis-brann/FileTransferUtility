@@ -77,7 +77,6 @@ vector<int> parseMissedPackets(string &missedPacketsMsg)
 void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<int> &packetsToSend, int &totalPackets, int &length)
 {
     int numPacketsToSend = packetsToSend.size();
-    char *msg;
     // For one window, send each packet
     for (int i = 0; i < numPacketsToSend; ++i)
     {
@@ -104,11 +103,24 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         // Read in data from file
         infile.read(packet, sendSize);
 
-        // Make msg in correct format (do the c-dance!)
+        cout << "sendSize: " << sendSize << endl;
         const char* piCharStar = piStr.c_str();
-        msg = const_cast<char *>(piCharStar);
-        strcat(msg, " ");
-        strcat(msg, packet);
+        char *pi = const_cast<char *>(piCharStar);
+
+        // Make msg in correct format (do the c-dance!)
+        char *msg;
+        if ((msg = (char *)malloc(msgLength)) != NULL)
+        {
+            msg[0] = '\0';
+            strcat(msg, pi);
+            strcat(msg, packet);
+        }
+   
+        // msg[0] = '\0'
+        // strcat(msg, " ");
+        // strcat(msg, packet);
+
+        cout << "sendSize: " << sendSize << endl;
 
         // Send msg
         int sent = sendto(udpFd, msg, msgLength, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
