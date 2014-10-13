@@ -143,18 +143,22 @@ void receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
     socklen_t udpInfoSize = sizeof udpInfo;
     int received = recvfrom(udpFd, msg, sizeof(msg), 0, udpInfo->ai_addr, &udpInfo->ai_addrlen);
     cout << "received " << received << " bytes" << endl;
+
+    cout << "raw msg: " << msg << endl;
     msg[received] = 0;
 
-    cout << "msg: " << msg << endl;
+    cout << "msg terminated: " << msg << endl;
 
     string msgStr(msg);
-    string piStr = msgStr.substr(0, msgStr.find(" "));
+    int spacePos = msgStr.find(" ");
+    string piStr = msgStr.substr(0, spacePos);
 
     cout << "piStr: " << piStr << endl;
     int packetIndex = stoi(piStr);
+    char *receivedPacket = const_cast<char *>(msgStr.substr(spacePos+1).c_str());
+    cout << "received packet: " << receivedPacket << endl;
 
-    cout << "done creating msg" << endl;
-    receivedPackets[packetIndex] = strstr(msg, " ") + 1;
+    strncpy( receivedPackets[packetIndex] , receivedPacket, msgStr.length() - spacePos - 1);
     cout << "received packet: " << receivedPackets[0] << endl;
 }
 
@@ -469,23 +473,6 @@ int main(int argc, const char* argv[])
             fprintf(stderr, "UDP client: failed to bind socket\n");
             return 2;
         }
-
-        // // Listen for incoming connections
-        // listen(tcpFd, CONNECTIONS_ALLOWED);
-
-        // // Accept incoming connections
-        // socklen_t tcpAddrSize = sizeof tcpInfo;
-
-        // cout << "trying to accept tcp" << endl;
-        // int establishedTcpFd;
-        // while(true){
-        //     establishedTcpFd = accept(tcpFd, (sockaddr *)tcpInfo, &tcpAddrSize);
-        //     if (establishedTcpFd == -1)
-        //     {
-        //         continue;
-        //     }
-        //     break;
-        // }
 
         // cout << "accepted tcp: " << establishedTcpFd << endl;
         // TODO
