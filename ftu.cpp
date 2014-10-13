@@ -76,12 +76,22 @@ vector<int> parseMissedPackets(string &missedPacketsMsg)
 void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<int> &packetsToSend, int &totalPackets, int &length)
 {
     int numPacketsToSend = packetsToSend.size();
+    cout << "numPacketsToSend: " << numPacketsToSend << endl;
+    char *msg;
     for (int i = 0; i < numPacketsToSend; ++i)
     {
+        cout << "starting forloop" << endl;
         char packet[packetSize];
         infile.seekg(packetsToSend[i] * packetSize);
         int sendSize = packetSize;
-        
+
+        stringstream piStrStream;
+        int packetIndex = i;
+        piStrStream << packetIndex;
+        string piStr = piStrStream.str();
+
+        int msgLength = sendSize + piStr.length() + 1;
+
         if (packetsToSend[i] + 1 == totalPackets)
         {
             sendSize = length % packetSize;
@@ -89,16 +99,11 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         
         infile.read(packet, sendSize);
 
-        stringstream piStrStream;
-        piStrStream << i;
-        string piStr = piStrStream.str();
         const char* piCharStar = piStr.c_str();
 
-        char *msg = const_cast<char *>(piCharStar);
+        msg = const_cast<char *>(piCharStar);
         strcat(msg, " ");
         strcat(msg, packet);
-
-        int msgLength = sendSize + piStr.length() + 1;
 
         int sent = sendto(udpFd, msg, msgLength, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
         cout << "bytes sent: " << sent << endl;
