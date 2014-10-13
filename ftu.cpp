@@ -84,9 +84,18 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         
         infile.read(packet, sendSize);
 
+        cout << "packet: " << packet << endl;
+
         tuple<int,char*> datagram (packetsToSend[i], packet);
 
-        sendto(udpFd, &datagram, sizeof datagram, 0, (sockaddr *)udpInfo, sizeof(udpInfo));
+        cout << "packet pointer: " << &packet << endl;
+
+        //cout << "file descriptor: " << udpFd << endl;
+        //cout << "udpInfo port " << udpInfo->sin_port << endl;
+        //cout << "udpInfo s_addr " << udpInfo->sin_addr.s_addr << endl;
+
+        int sent = sendto(udpFd, &datagram, sizeof datagram, 0, udpInfo->ai_addr, udpInfo->ai_addrlen);
+        cout << "bytes sent: " << sent << endl;
     }
 }
 
