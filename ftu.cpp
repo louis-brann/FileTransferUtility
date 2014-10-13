@@ -131,9 +131,12 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
 
 void *tcpReceive(void *arg)
 {
-    tcpReceiverParams_t *tcpReceiverParams = (tcpReceiverParams_t *)arg;
-    recv(tcpReceiverParams->fd, &tcpReceiverParams->totalPackets, sizeof tcpReceiverParams->totalPackets, 0);
-    allPacketsSignal = 1;
+    while (true)
+    {
+        tcpReceiverParams_t *tcpReceiverParams = (tcpReceiverParams_t *)arg;
+        recv(tcpReceiverParams->fd, &tcpReceiverParams->totalPackets, sizeof tcpReceiverParams->totalPackets, 0);
+        allPacketsSignal = 1;
+    }
     return nullptr;
 }
 
@@ -152,17 +155,33 @@ int receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
     int received = recvfrom(udpFd, msg, sizeof(msg), 0, udpInfo->ai_addr, &udpInfo->ai_addrlen);
     msg[received] = 0;
 
+    cout << "msg: " << msg << endl;
+
+    cout << "received " << received << " bytes" << endl;
+
     // Separate packet index from rest of string
     string msgStr(msg);
+    cout << "msgStr: " << msgStr << endl;
     int spacePos = msgStr.find(" ");
+    cout << "spacePos: " << spacePos << endl;
     string piStr = msgStr.substr(0, spacePos);
     int packetIndex = stoi(piStr);
+
+    cout << "pi: " << packetIndex << endl;
+
+    cout << "happening here" << endl;
 
     // Convert string to cstr to copy into array of packetes
     string actualMsg = msgStr.substr(spacePos+1);
     char *receivedPacket = const_cast<char *>(actualMsg.c_str());
-    strncpy( receivedPackets[packetIndex] , receivedPacket, msgStr.length() - spacePos - 1);
-    cout << "received " << received << " bytes" << endl;
+
+    cout << "right before strncpy" << endl;
+    cout << "received packet: " << receivedPacket << endl;
+
+    cout << "copy len: " << actualMsg.length() << endl;
+
+    strncpy( receivedPackets[packetIndex] , receivedPacket, actualMsg.length());
+    
     cout << "received packet: " << receivedPackets[0] << endl;
 
     return received;
@@ -173,6 +192,7 @@ int receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
 // Loop through buffer checking what packets are missing
 string getMissedPackets(int totalPackets, char *receivedPackets[])
 {
+    cout << "getting missed packets" << endl;
     string missingPackets = "";
     for (int i = 0; i < totalPackets; ++i)
     {
@@ -374,23 +394,27 @@ int main(int argc, const char* argv[])
             int windowOffset = 0;
             int bytesRead = 0;
             char *receivedPackets[totalPackets];
-
+            for (int i = 0; i < totalPackets; ++i)
+            {
+                receivedPackets[totalPackets] = (char *)malloc(packetSize);
+            }
             ofstream outFile;
             outFile.open(destFile, ios::out|ios::binary|ios::ate);
+
+            // Make new thread to listen for TCP connection
+            tcpReceiverParams_t tcpReceiverParams;
+            tcpReceiverParams.fd = establishedTcpFd;
+            tcpReceiverParams.totalPackets = totalPackets;
+
+            pthread_t tcpReceiver;
+            if (int err_code = pthread_create(&tcpReceiver, NULL, tcpReceive, &tcpReceiverParams))
+            {
+                cerr << "Error making new thread \n";
+                exit(err_code);
+            }
+
             while(true)
             {
-                // Make new thread to listen for TCP connection
-                tcpReceiverParams_t tcpReceiverParams;
-                tcpReceiverParams.fd = establishedTcpFd;
-                tcpReceiverParams.totalPackets = totalPackets;
-
-                pthread_t tcpReceiver;
-                if (int err_code = pthread_create(&tcpReceiver, NULL, tcpReceive, &tcpReceiverParams))
-                {
-                    cerr << "Error making new thread \n";
-                    exit(err_code);
-                }
-
                 // Listen for one set of packets
                 string missingPackets;
                 while(true)
@@ -409,32 +433,33 @@ int main(int argc, const char* argv[])
                     }
                 }
 
-                cout << "out of receiving packets loop" << endl;
-
-                // Reap thread from this round of listening
-                if(int err_code = pthread_join(tcpReceiver, NULL))
-                {
-                    cerr << "Couldn't join! \n";
-                    exit(err_code);
-                }
+                cout << "out of receiving packets loop" << endl;                
                 allPacketsSignal = 0;
-
-                cout << "joined pthread" << endl;
 
                 // If the buffer is full, write it to the file
                 if (missingPackets.length() == 0)
                 {
+                    // If we've read all the packets in this window, reap thread
+                    if(int err_code = pthread_join(tcpReceiver, NULL))
+                    {
+                        cerr << "Couldn't join! \n";
+                        exit(err_code);
+                    }
+                    cout << "joined pthread" << endl;
+                    close(establishedTcpFd);
+
                     cout << "empty missing packets " << endl;
                     cout << "total packets: " << totalPackets << endl;
                     // Update to work for buffer (extra offset that gets incremented per file read)   
                     for (int i = 0; i < totalPackets; ++i)
                     {
                         outFile.seekp(windowOffset + i*packetSize);
+                        cout << "outFIle offset: " << outFile.tellp() << endl;
                         outFile.write(receivedPackets[i], bytesRead);
                         outFile.close();
                     }
 
-                    close(establishedTcpFd);
+                    break;
                 }
             }
         }
