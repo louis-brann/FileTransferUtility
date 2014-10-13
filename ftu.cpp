@@ -66,8 +66,12 @@ vector<int> parseMissedPackets(string &missedPacketsMsg)
 void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<int> &packetsToSend, int &totalPackets, int &length)
 {
     int numPacketsToSend = packetsToSend.size();
+    cout << "numPacketsToSend: " << numPacketsToSend << endl;
+    cout << "about to start sendPackets" << endl;
     for (int i = 0; i < numPacketsToSend; ++i)
     {
+        cout << "sending packet " << i << endl;
+        cout << "contents of packet " << packetsToSend[i] << endl;
         char packet[packetSize];
         infile.seekg(packetsToSend[i] * packetSize);
         int sendSize = packetSize;
@@ -75,6 +79,7 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
         if (packetsToSend[i] + 1 == totalPackets)
         {
             sendSize = length % packetSize;
+            cout << "sendSize: " << sendSize << endl;
         }
         
         infile.read(packet, sendSize);
@@ -411,14 +416,24 @@ int main(int argc, const char* argv[])
             return 2;
         }
 
-        // Listen for incoming connections
-        listen(tcpFd, CONNECTIONS_ALLOWED);
+        // // Listen for incoming connections
+        // listen(tcpFd, CONNECTIONS_ALLOWED);
 
-        // Accept incoming connections
-        socklen_t tcpAddrSize = sizeof tcpInfo;
-        int establishedTcpFd = accept(tcpFd, (sockaddr *)tcpInfo, &tcpAddrSize);
-        bool goAhead;
+        // // Accept incoming connections
+        // socklen_t tcpAddrSize = sizeof tcpInfo;
 
+        // cout << "trying to accept tcp" << endl;
+        // int establishedTcpFd;
+        // while(true){
+        //     establishedTcpFd = accept(tcpFd, (sockaddr *)tcpInfo, &tcpAddrSize);
+        //     if (establishedTcpFd == -1)
+        //     {
+        //         continue;
+        //     }
+        //     break;
+        // }
+
+        // cout << "accepted tcp: " << establishedTcpFd << endl;
         // TODO
         // Send source, dest
         // send file name from source
@@ -445,15 +460,19 @@ int main(int argc, const char* argv[])
             packetsToSend.push_back(i);
         }
 
+        int goAhead;
         // Send all packets
         while (packetsToSend.size() > 0)
         {
             // TCP: Notify of how many packets are about to be sent
             uint32_t totalPacketsBuf = htonl(totalPackets);
-            send(establishedTcpFd, &totalPacketsBuf, sizeof totalPackets, 0);
+            cout << "totalPacketsBuf: " << totalPacketsBuf << endl;
+            int sent = send(tcpFd, &totalPacketsBuf, sizeof totalPackets, 0);
+            cout << "bytes sent: " << sent << endl;
 
             // TCP: Receive go-ahead response
-            recv(establishedTcpFd, &goAhead, sizeof goAhead, 0);
+            int received = recv(tcpFd, &goAhead, sizeof goAhead, 0);
+            cout << "Bytes received: " << received << endl;
             if (goAhead == 0)
             {
                 cerr << "Connection denied!";
@@ -463,19 +482,21 @@ int main(int argc, const char* argv[])
             // UDP: Send data
             sendPackets(myFile, udpFd, udpInfo, packetsToSend, totalPackets, length);
 
+            cout << "1 set of udp packets sent!" << endl;
+
             // TCP: Done sending
-            send(establishedTcpFd, &postMsg, sizeof postMsg, 0);
+            send(tcpFd, &postMsg, sizeof postMsg, 0);
 
             // TCP: Receive missed packets message
             string missedPackets;
-            recv(establishedTcpFd, &missedPackets, sizeof missedPackets, 0);
+            recv(tcpFd, &missedPackets, sizeof missedPackets, 0);
             packetsToSend = parseMissedPackets(missedPackets);
         }
 
         // Close all established connections
-        close(establishedTcpFd);
-        close(udpFd);
         close(tcpFd);
+        close(udpFd);
+        //close(tcpFd);
     }
 
     // Free the memory
