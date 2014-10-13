@@ -132,8 +132,9 @@ int receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
     cout << "receiving packet" << endl;
     
     // reserve space to represent any index in window, plus a separating space
-    int windowDigits = log10(WINDOW_SIZE) + 1;
-    char msg[packetSize + windowDigits + 1];
+    // int windowDigits = log10(WINDOW_SIZE) + 1;
+    char msg[packetSize + 5];
+    //char msg[packetSize + windowDigits + 1];
     
     // Receive the message
     int received = recvfrom(udpFd, msg, sizeof(msg), 0, udpInfo->ai_addr, &udpInfo->ai_addrlen);
