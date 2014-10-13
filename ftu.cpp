@@ -270,14 +270,18 @@ int main(int argc, const char* argv[])
 
             // TCP: receive number of packets to be sent
             uint32_t totalPacketsBuf;
-            recv(establishedTcpFd, &totalPacketsBuf, sizeof (uint32_t), 0);
+            int received = recv(establishedTcpFd, &totalPacketsBuf, sizeof (uint32_t), 0);
+            cout << "bytes received: " << received << endl;
+            cout << "pre change totalPacketsBuf: " << totalPacketsBuf << endl;
+            cout << "pre-cast ntohl(totalPacketsBuf): " << ntohl(totalPacketsBuf) << endl;
             int totalPackets = (int)ntohl(totalPacketsBuf);
 
             cout << "Got num packets: " << totalPackets << endl;
 
             // TCP: give the go-ahead
-            bool goAhead = 1;
-            send(establishedTcpFd, &goAhead, sizeof goAhead, 0);
+            int goAhead = 1;
+            int sent = send(establishedTcpFd, &goAhead, sizeof goAhead, 0);
+            cout << "Bytes sent: " << sent << endl;
 
             cout << "Sent go-ahead to: " << establishedTcpFd << endl;
 
