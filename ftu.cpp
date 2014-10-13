@@ -196,10 +196,6 @@ int main(int argc, const char* argv[])
             exit(status);
         }
 
-        // Create file descriptors for TCP and UDP connections
-        //int tcpFd = socket(tcpInfo->ai_family, tcpInfo->ai_socktype, tcpInfo->ai_protocol);
-        //int udpFd = socket(udpInfo->ai_family, udpInfo->ai_socktype, udpInfo->ai_protocol);
-
         int tcpFd, udpFd;
         int yes = 1;
         // TCP: loop through all the results and bind to the first we can
@@ -415,24 +411,6 @@ int main(int argc, const char* argv[])
             return 2;
         }
 
-
-
-
-        // // Create file descriptors for TCP and UDP connections
-        
-        // int udpFd = socket(udpInfo->ai_family, udpInfo->ai_socktype, udpInfo->ai_protocol);
-        // bind(udpFd, udpInfo->ai_addr, udpInfo->ai_addrlen);
-
-        // // Associate sockets with port on local machine
-        
-        // int tcpFd = socket(tcpInfo->ai_family, tcpInfo->ai_socktype, tcpInfo->ai_protocol);
-        // // Connect the TCP connection
-        // if ((status = connect(tcpFd, tcpInfo->ai_addr, tcpInfo->ai_addrlen)) == -1)
-        // {
-        //     cerr << "TCP: Failed to make connection with error: " << status << endl;
-        //     exit(status);
-        // }
-
         // Listen for incoming connections
         listen(tcpFd, CONNECTIONS_ALLOWED);
 
@@ -441,6 +419,7 @@ int main(int argc, const char* argv[])
         int establishedTcpFd = accept(tcpFd, (sockaddr *)tcpInfo, &tcpAddrSize);
         bool goAhead;
 
+        // TODO
         // Send source, dest
         // send file name from source
         // send dest name 
@@ -453,7 +432,11 @@ int main(int argc, const char* argv[])
         myFile.seekg(0, myFile.end);
         int length = myFile.tellg();
         myFile.seekg(0, myFile.beg);
-        int totalPackets = ceil(length / packetSize);
+        int totalPackets = ceil((float)length / (float)packetSize);
+
+        cout << "length: " << length << endl;
+
+        cout << "totalPackets: " << totalPackets << endl;
 
         // Initially they're missing all packets
         vector<int> packetsToSend;
@@ -466,8 +449,7 @@ int main(int argc, const char* argv[])
         while (packetsToSend.size() > 0)
         {
             // TCP: Notify of how many packets are about to be sent
-            string msg = to_string(totalPackets);
-            send(establishedTcpFd, &msg, sizeof msg, 0);
+            send(establishedTcpFd, &totalPackets, sizeof totalPackets, 0);
 
             // TCP: Receive go-ahead response
             recv(establishedTcpFd, &goAhead, sizeof goAhead, 0);
