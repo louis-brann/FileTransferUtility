@@ -178,14 +178,14 @@ int receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
 
     // Convert string to cstr to copy into array of packetes
     string actualMsg = msgStr.substr(spacePos+1);
-    char *receivedPacket = const_cast<char *>(actualMsg.c_str());
+    const char *receivedPacket = actualMsg.c_str();
 
     cout << "right before strncpy" << endl;
     cout << "received packet: " << receivedPacket << endl;
-
     cout << "copy len: " << actualMsg.length() << endl;
-
-    strncpy( receivedPackets[packetIndex] , receivedPacket, actualMsg.length());
+    cout << "receivedPackets packet Index: " << receivedPackets[packetIndex] << endl;
+    cout << "sizeof rp: " << sizeof(receivedPacket) << endl;
+    strncpy( receivedPackets[packetIndex] , receivedPacket, sizeof(receivedPackets[packetIndex]));
     
     cout << "received packet: " << receivedPackets[0] << endl;
 
@@ -247,24 +247,20 @@ int main(int argc, const char* argv[])
     {
         servName = dest.substr(0, colonPos);
         destFile = dest.substr(colonPos+1);
-        // TODO
-        cout << "Server: " << servName << endl;
+        
+        // If the dest file 
+        int srcColonPos = source.find(":");
+        string origFileName = "";
+        if (srcColonPos == -1)
+        {
+            origFileName = source;
+        }
+        else 
+        {
+            origFileName = source.substr(srcColonPos+1);
+        }
+        destFile += origFileName;
     }
-
-    // Set up the dest file to have the same name as the original file
-    int srcColonPos = source.find(":");
-    string origFileName = "";
-    if (srcColonPos == -1)
-    {
-        origFileName = source;
-    }
-    else 
-    {
-        origFileName = source.substr(srcColonPos+1);
-    }
-    destFile += origFileName;
-
-    cout << "Filename: " << destFile << endl;
     
 
     // Start setting up network stuff,
@@ -399,10 +395,10 @@ int main(int argc, const char* argv[])
             int windowOffset = 0;
             int bytesRead = 0;
             char *receivedPackets[totalPackets];
-            for (int i = 0; i < totalPackets; ++i)
-            {
-                receivedPackets[totalPackets] = (char *)malloc(packetSize);
-            }
+            // for (int i = 0; i < totalPackets; ++i)
+            // {
+            //     receivedPackets[totalPackets] = (char *)malloc(packetSize);
+            // }
             ofstream outFile;
             outFile.open(destFile, ios::out|ios::binary|ios::ate);
 
