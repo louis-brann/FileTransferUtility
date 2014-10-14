@@ -247,24 +247,30 @@ int main(int argc, const char* argv[])
     {
         servName = dest.substr(0, colonPos);
         destFile = dest.substr(colonPos+1);
+
+        cout << "destFile before file check: " << destFile << endl;
+
+        if (destFile.find(".") == -1)
+        {
+            int srcColonPos = source.find(":");
+            string origFileName = "";
+
+            if (srcColonPos == -1)
+            {
+                origFileName = source;
+            }
+            else 
+            {
+                origFileName = source.substr(srcColonPos+1);
+            }
+            destFile += origFileName;
+        }
         // TODO
         cout << "Server: " << servName << endl;
     }
 
     // Set up the dest file to have the same name as the original file
-    if (dest.find(".") == -1){
-        int srcColonPos = source.find(":");
-        string origFileName = "";
-        if (srcColonPos == -1)
-        {
-            origFileName = source;
-        }
-        else 
-        {
-            origFileName = source.substr(srcColonPos+1);
-        }
-        destFile += origFileName;
-    }
+    
     cout << "Filename: " << destFile << endl;
     
     
@@ -577,6 +583,7 @@ int main(int argc, const char* argv[])
             cout << "bytes sent: " << sent << endl;
 
             // TCP: Send file name
+            cout << "destFile: " << destFile << endl;
             send(tcpFd, &destFile, sizeof destFile, 0);
 
             // TCP: Receive go-ahead response
