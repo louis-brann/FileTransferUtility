@@ -185,7 +185,9 @@ int receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
 
     cout << "copy len: " << actualMsg.length() << endl;
 
-    strncpy( receivedPackets[packetIndex] , receivedPacket, actualMsg.length());
+    receivedPackets[packetIndex] = receivedPacket;
+
+    //strncpy( receivedPackets[packetIndex] , receivedPacket, actualMsg.length());
     
     cout << "received packet: " << receivedPackets[0] << endl;
 
@@ -397,12 +399,12 @@ int main(int argc, const char* argv[])
             // UDP: Receive ALL packets
             // TODO: update for buffer not entire file
             int windowOffset = 0;
-            int bytesRead = 0;
+            int bytesRead = 0;`
             char *receivedPackets[totalPackets];
-            for (int i = 0; i < totalPackets; ++i)
-            {
-                receivedPackets[totalPackets] = (char *)malloc(packetSize);
-            }
+            // for (int i = 0; i < totalPackets; ++i)
+            // {
+            //     receivedPackets[totalPackets] = (char *)malloc(packetSize);
+            // }
             ofstream outFile;
             outFile.open(destFile, ios::out|ios::binary|ios::ate);
 
