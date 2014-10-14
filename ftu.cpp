@@ -431,7 +431,7 @@ int main(int argc, const char* argv[])
                     } 
                     // Otherwise, send what we're missing
                     else 
-                    {
+                    { 
                         missingPackets = getMissedPackets(totalPackets, receivedPackets);
                         send(establishedTcpFd, &missingPackets, sizeof missingPackets, 0);
                         break;
