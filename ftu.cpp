@@ -161,29 +161,17 @@ int receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
     msg[received] = 0;
 
     cout << "msg: " << msg << endl;
-
     cout << "received " << received << " bytes" << endl;
 
     // Separate packet index from rest of string
     string msgStr(msg);
-    cout << "msgStr: " << msgStr << endl;
     int spacePos = msgStr.find(" ");
-    cout << "spacePos: " << spacePos << endl;
     string piStr = msgStr.substr(0, spacePos);
     int packetIndex = stoi(piStr);
-
-    cout << "pi: " << packetIndex << endl;
-
-    cout << "happening here" << endl;
 
     // Convert string to cstr to copy into array of packetes
     string actualMsg = msgStr.substr(spacePos+1);
     char *receivedPacket = const_cast<char *>(actualMsg.c_str());
-
-    cout << "right before strncpy" << endl;
-    cout << "received packet: " << receivedPacket << endl;
-
-    cout << "copy len: " << actualMsg.length() << endl;
 
     strncpy( receivedPackets[packetIndex] , receivedPacket, actualMsg.length());
     
@@ -397,11 +385,9 @@ int main(int argc, const char* argv[])
             }
             cout << "TCP: Received filename: " << destFile << endl;
 
-            // TCP: give the go-ahead
+            
             int goAhead = 1;
             int sent = send(establishedTcpFd, &goAhead, sizeof goAhead, 0);
-            cout << "Bytes sent: " << sent << endl;
-
             cout << "Sent go-ahead to: " << establishedTcpFd << endl;
 
             // UDP: Receive ALL packets
@@ -409,16 +395,17 @@ int main(int argc, const char* argv[])
             int windowOffset = 0;
             int bytesRead = 0;
             char *receivedPackets[totalPackets];
-            for (int i = 0; i < totalPackets; ++i)
-            {
-                receivedPackets[totalPackets] = (char *)malloc(packetSize);
-            }
+            // for (int i = 0; i < totalPackets; ++i)
+            // {
+            //     receivedPackets[totalPackets] = (char *)malloc(packetSize);
+            // }
+
             ofstream outFile;
             cout << "destfile: " << destFile << endl;
             outFile.open(destFile, ios::out|ios::binary);
 
             // Listen for one set of packets
-            string missingPackets;
+            
             while(true)
             {
                 // Make new thread to listen for TCP connection
@@ -432,6 +419,8 @@ int main(int argc, const char* argv[])
                     cerr << "Error making new thread \n";
                     exit(err_code);
                 }
+
+                string missingPackets;
                 
                 while(true)
                 {
@@ -439,22 +428,21 @@ int main(int argc, const char* argv[])
                     // If they aren't done sending, receive more packets
                     if (allPacketsSignal == 0) 
                     {   
-                        fd_set read_flags,write_flags; // the flag sets to be used
-                        struct timeval waitd;          // the max wait time for an event
-                        int sel;                      // holds return value for select();
+                        // fd_set read_flags,write_flags; // the flag sets to be used
+                        // struct timeval waitd;          // the max wait time for an event
+                        // int sel;                      // holds return value for select();
 
-                        waitd.tv_sec = 5;
-                        FD_ZERO(&read_flags);
-                        FD_SET(udpFd, &read_flags);
-                        if ((sel = select(udpFd+1, &read_flags, NULL, NULL, &waitd)) < 0)
-                        {
-                            allPacketsSignal = 1;
-                            cout << " updating aps: " << allPacketsSignal << endl;
-                            cout << "sel is: " << sel << endl;
-                            continue;
-                        }
-
-                        bytesRead = receivePacket(udpFd, udpInfo, receivedPackets);
+                        // waitd.tv_sec = 5;
+                        // FD_ZERO(&read_flags);
+                        // FD_SET(udpFd, &read_flags);
+                        // if ((sel = select(udpFd+1, &read_flags, NULL, NULL, &waitd)) <= 0)
+                        // {
+                        //     cout << " updating aps: " << allPacketsSignal << endl;
+                        //     cout << "sel is: " << sel << endl;
+                        //     continue;
+                        // }
+                        // cout << "sel is: " << sel << endl;
+                        bytesRead += receivePacket(udpFd, udpInfo, receivedPackets);
                     } 
                     // Otherwise, send what we're missing
                     else 
@@ -486,11 +474,9 @@ int main(int argc, const char* argv[])
                     // Update to work for buffer (extra offset that gets incremented per file read)   
                     for (int i = 0; i < totalPackets; ++i)
                     {
-                        cout << "(i, packetSize): " << i << " " << packetSize << endl;
-                        cout << "windowOffset " << windowOffset << endl;
                         outFile.seekp(windowOffset + i*packetSize);
-                        cout << "outFIle offset: " << outFile.tellp() << endl;
-                        cout << "bytesRead: " << endl;
+                        cout << "outFile offset: " << outFile.tellp() << endl;
+                        cout << "bytesRead: " << bytesRead << endl;
                         outFile.write(receivedPackets[i], bytesRead);
                     }
                     outFile.close();
