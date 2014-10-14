@@ -136,12 +136,12 @@ void sendPackets(ifstream &infile, int &udpFd, struct addrinfo *udpInfo, vector<
 
 void *tcpReceive(void *arg)
 {
-    while (true)
-    {
-        tcpReceiverParams_t *tcpReceiverParams = (tcpReceiverParams_t *)arg;
-        recv(tcpReceiverParams->fd, &tcpReceiverParams->totalPackets, sizeof tcpReceiverParams->totalPackets, 0);
-        allPacketsSignal = 1;
-    }
+    tcpReceiverParams_t *tcpReceiverParams = (tcpReceiverParams_t *)arg;
+    int received = recv(tcpReceiverParams->fd, &tcpReceiverParams->totalPackets, sizeof tcpReceiverParams->totalPackets, 0);
+    // cout << "TCP thread received bytes: " << received << endl;
+    // cout << "TCP thread pre-change APS: " << allPacketsSignal << endl;
+    allPacketsSignal = 1;
+    // cout << "TCP thread post-change APS: " << allPacketsSignal << endl;
     return nullptr;
 }
 
@@ -341,7 +341,8 @@ int main(int argc, const char* argv[])
                 continue;
             }
 
-            if (::bind(udpFd, p->ai_addr, p->ai_addrlen) == -1) {
+            if (::bind(udpFd, p->ai_addr, p->ai_addrlen) == -1) 
+            {
                 close(udpFd);
                 perror("UDP server: bind error");
                 continue;
@@ -350,17 +351,17 @@ int main(int argc, const char* argv[])
             break;
         }
 
-        // TCP: Start listening
-        if ((status = listen(tcpFd, CONNECTIONS_ALLOWED)) == -1) 
-        {
-            cerr << "TCP: Failed listening with error: " << status << endl;
-            exit(status);
-        }
-
-        cout << "Setup complete. Listening" << endl;
-
         while(true)
         {
+            // TCP: Start listening
+            if ((status = listen(tcpFd, CONNECTIONS_ALLOWED)) == -1) 
+            {
+                cerr << "TCP: Failed listening with error: " << status << endl;
+                exit(status);
+            }
+
+            cout << "Setup complete. Listening" << endl;
+
             // TCP: accept connection
             socklen_t tcpAddrSize = sizeof tcpInfo;
             int establishedTcpFd = accept(tcpFd, (sockaddr *)tcpInfo, &tcpAddrSize);
@@ -407,29 +408,46 @@ int main(int argc, const char* argv[])
                 receivedPackets[totalPackets] = (char *)malloc(packetSize);
             }
             ofstream outFile;
-            outFile.open(destFile, ios::out|ios::binary|ios::ate);
+            cout << "destfile: " << destFile << endl;
+            outFile.open(destFile, ios::out|ios::binary);
 
-            // Make new thread to listen for TCP connection
-            tcpReceiverParams_t tcpReceiverParams;
-            tcpReceiverParams.fd = establishedTcpFd;
-            tcpReceiverParams.totalPackets = totalPackets;
-
-            pthread_t tcpReceiver;
-            if (int err_code = pthread_create(&tcpReceiver, NULL, tcpReceive, &tcpReceiverParams))
-            {
-                cerr << "Error making new thread \n";
-                exit(err_code);
-            }
-
+            // Listen for one set of packets
+            string missingPackets;
             while(true)
             {
-                // Listen for one set of packets
-                string missingPackets;
+                // Make new thread to listen for TCP connection
+                tcpReceiverParams_t tcpReceiverParams;
+                tcpReceiverParams.fd = establishedTcpFd;
+                tcpReceiverParams.totalPackets = totalPackets;
+
+                pthread_t tcpReceiver;
+                if (int err_code = pthread_create(&tcpReceiver, NULL, tcpReceive, &tcpReceiverParams))
+                {
+                    cerr << "Error making new thread \n";
+                    exit(err_code);
+                }
+                
                 while(true)
                 {
+                    cout << "allPacketsSignal main thread: " << allPacketsSignal << endl;
                     // If they aren't done sending, receive more packets
                     if (allPacketsSignal == 0) 
                     {   
+                        fd_set read_flags,write_flags; // the flag sets to be used
+                        struct timeval waitd;          // the max wait time for an event
+                        int sel;                      // holds return value for select();
+
+                        waitd.tv_sec = 5;
+                        FD_ZERO(&read_flags);
+                        FD_SET(udpFd, &read_flags);
+                        if ((sel = select(udpFd+1, &read_flags, NULL, NULL, &waitd)) < 0)
+                        {
+                            allPacketsSignal = 1;
+                            cout << " updating aps: " << allPacketsSignal << endl;
+                            cout << "sel is: " << sel << endl;
+                            continue;
+                        }
+
                         bytesRead = receivePacket(udpFd, udpInfo, receivedPackets);
                     } 
                     // Otherwise, send what we're missing
@@ -441,19 +459,20 @@ int main(int argc, const char* argv[])
                     }
                 }
 
-                cout << "out of receiving packets loop" << endl;                
+                cout << "out of receiving packets loop" << endl;
+                 // If we've read all the packets in this window, reap thread
+                if(int err_code = pthread_join(tcpReceiver, NULL))
+                {
+                    cerr << "Couldn't join! \n";
+                    exit(err_code);
+                }
+                cout << "joined pthread" << endl;                
                 allPacketsSignal = 0;
 
                 // If the buffer is full, write it to the file
                 if (missingPackets.length() == 0)
                 {
-                    // If we've read all the packets in this window, reap thread
-                    if(int err_code = pthread_join(tcpReceiver, NULL))
-                    {
-                        cerr << "Couldn't join! \n";
-                        exit(err_code);
-                    }
-                    cout << "joined pthread" << endl;
+                   
                     close(establishedTcpFd);
 
                     cout << "empty missing packets " << endl;
@@ -461,11 +480,14 @@ int main(int argc, const char* argv[])
                     // Update to work for buffer (extra offset that gets incremented per file read)   
                     for (int i = 0; i < totalPackets; ++i)
                     {
+                        cout << "(i, packetSize): " << i << " " << packetSize << endl;
+                        cout << "windowOffset " << windowOffset << endl;
                         outFile.seekp(windowOffset + i*packetSize);
                         cout << "outFIle offset: " << outFile.tellp() << endl;
+                        cout << "bytesRead: " << endl;
                         outFile.write(receivedPackets[i], bytesRead);
-                        outFile.close();
                     }
+                    outFile.close();
 
                     break;
                 }
