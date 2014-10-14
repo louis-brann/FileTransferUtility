@@ -252,19 +252,21 @@ int main(int argc, const char* argv[])
     }
 
     // Set up the dest file to have the same name as the original file
-    int srcColonPos = source.find(":");
-    string origFileName = "";
-    if (srcColonPos == -1)
-    {
-        origFileName = source;
+    if (dest.find(".") == -1){
+        int srcColonPos = source.find(":");
+        string origFileName = "";
+        if (srcColonPos == -1)
+        {
+            origFileName = source;
+        }
+        else 
+        {
+            origFileName = source.substr(srcColonPos+1);
+        }
+        destFile += origFileName;
     }
-    else 
-    {
-        origFileName = source.substr(srcColonPos+1);
-    }
-    destFile += origFileName;
-
     cout << "Filename: " << destFile << endl;
+    
     
 
     // Start setting up network stuff,
@@ -386,6 +388,7 @@ int main(int argc, const char* argv[])
                 cout << "Error receiving file name" << endl;
                 exit(1);
             }
+            cout << "TCP: Received filename: " << destFile << endl;
 
             // TCP: give the go-ahead
             int goAhead = 1;
