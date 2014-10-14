@@ -621,7 +621,7 @@ int main(int argc, const char* argv[])
             sendPackets(myFile, udpFd, udpInfo, packetsToSend, totalPackets, length);
 
             cout << "1 set of udp packets sent!" << endl;
-            usleep(1000000);
+            usleep(10000000);
 
             // TCP: Done sending
             send(tcpFd, &postMsg, sizeof postMsg, 0);
