@@ -25,7 +25,7 @@ def main():
         tcpSocket.bind(("", tcpPort))
         tcpSocket.listen(1)
 
-        #TCP: Accept incoming handshake, 
+        #TCP: Accept incoming handshake 
         establishedTcp, addr = tcpSocket.accept()
 
         fileMetadataPickled = establishedTcp.recv(1024)
@@ -34,12 +34,19 @@ def main():
         fileMetadata = pickle.loads(fileMetadataPickled)
         print fileMetadata
 
+        #Make datastructures to put data from udpSocket
+        while True:
+            fileBufferPickled, addr = udpSocket.recvfrom(1024)
+            fileBuffer = pickle.loads(fileBufferPickled)
+            break
+        print fileBuffer
+
+
     #Sender
     else:
         
         #make UDP socket
         udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udpSocket.bind((destIP,udpPort))
 
         #make TCP socket
         tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -52,6 +59,17 @@ def main():
         #TCP: Send fileName and fileSize
         fileMetadataPickled = pickle.dumps(fileMetadata)
         tcpSocket.send(fileMetadataPickled)
+
+        #Open file and put data into dataToSend
+        inFile = open(fileName, r)
+        dataToSend = inFile.read()
+
+        #UDP: send pickled data
+        dataToSendPickled = pickle.dumps(dataToSend)
+        udpSocket.sendto(dataToSendPickled, (destIP,udpPort))
+
+
+
 
 
 
