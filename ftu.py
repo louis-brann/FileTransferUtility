@@ -37,8 +37,8 @@ def main(argv):
     tcpPort  = 44001
     louieIP  = "134.173.42.215"
     benIP    = "134.173.42.9"
-    filePath = "/Users/Guest/Desktop/FileTransferUtility/example.txt"
-    fileName = "example.txt"
+    filePath = "/Users/Guest/Desktop/FileTransferUtility/random.txt"
+    fileName = "random.txt"
     allDone  = False
     packetSize = 1024
     
@@ -156,9 +156,8 @@ def main(argv):
         inFile = open(fileName, 'r')
         dataToSend = inFile.read()
 
-        # Prepickle all data
-        dataToSendPickled = pickle.dumps(dataToSend)
-        packetsToSend = [(i, dataToSendPickled[i:i + packetSize]) for i in range(0, len(dataToSendPickled), packetSize)]
+        # Get packets to send
+        packetsToSend = [(i, dataToSend[i:i + packetSize - ]) for i in range(0, len(dataToSend), packetSize)]
 
         # Go through entire file, sending all packets until known to be transferred
         packetCounter = 0
