@@ -49,7 +49,7 @@ def main(argv):
 
         currentWindow = 0
         numWindows = 2
-        while currentWindow + 1 < numWindows
+        while currentWindow + 1 < numWindows:
 
             establishedTcp.setblocking(1)
 
