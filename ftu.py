@@ -46,7 +46,7 @@ def main(argv):
 
             # Put packet data into file buffer
             packetIndex, packetData = currentPacket
-            fileBuffer[packetIndex] = copy.deepCopy(packetData)
+            fileBuffer[packetIndex] = copy.deepcopy(packetData)
            
             break
         print fileBuffer
