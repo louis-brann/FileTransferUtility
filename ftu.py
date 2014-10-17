@@ -57,8 +57,15 @@ def main(argv):
 
         print fileBuffer
 
-        outFile = open(fileName, 'wb')
-        numpy.ndarray.tofile(outFile)
+        outFile1 = open(fileName, 'wb')
+        outFile2 = open("example2.txt", 'wb')
+        outFile3 = open("example3.txt", 'wb')
+
+        outFile1.write("".join(fileBuffer))
+        pickle.dump(fileBuffer, outFile2)
+        for item in fileBuffer:
+            outFile3.write("%s" % item)
+    
 
 
     #Sender
