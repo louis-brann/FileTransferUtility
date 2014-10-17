@@ -30,6 +30,9 @@ def parseMissingPackets(packetsToSend, missingPackets):
             Bit string denoting which packets we missed
     Outputs: An array of packets that need to be resent
     """
+    print "packetsToSend Len: " + str(len(packetsToSend))
+    print "missingPackets Len: " + str(len(missingPackets))
+    # TODO
     return [ packetsToSend[i] for i in range(len(missingPackets)) if missingPackets[i]=="0" ]
 
 def main(argv):
@@ -144,55 +147,51 @@ def main(argv):
         tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcpSocket.connect((benIP, tcpPort))
 
-        #get filesize
-        fileSize = os.path.getsize(filePath)
-        fileMetadata = (fileName, fileSize)
-
-        #TCP: Send fileName and fileSize
-        fileMetadataPickled = pickle.dumps(fileMetadata)
-        tcpSocket.send(fileMetadataPickled)
-
         #Open file and put data into dataToSend
         inFile = open(fileName, 'r')
         dataToSend = inFile.read()
         dataToSendPickled = pickle.dumps(dataToSend)
 
         # Get packets to send
-        int stepSize = packetSize - 14;
-        for i in range(len(0, dataToSendPickled, stepSize)):
+        stepSize = packetSize - 14;
+        numPackets = int(math.ceil(float(len(dataToSendPickled))/ float(stepSize)))
+        packetsToSend = [None] * numPackets
+        for i in range(numPackets):
             indexStr = str(i)
             indexStr = "0" * (13 - len(indexStr)) + indexStr
             dataOffset = i * stepSize
             packetsToSend[i] = indexStr + " " + dataToSendPickled[dataOffset:dataOffset + stepSize]
 
+        #TCP: Send fileName and numPackets to send
+        fileMetadata = (fileName, numPackets)
+        fileMetadataPickled = pickle.dumps(fileMetadata)
+        tcpSocket.send(fileMetadataPickled)
+
         # Go through entire file, sending all packets until known to be transferred
         packetCounter = 0
-        while True:
+        missingPackets = "0" * numPackets
+        while missingPackets != "1" * numPackets:
+            print "missingPackets " + missingPackets
             print "packetCounter " + str(packetCounter)
             print "len(packetsToSend) " + str(len(packetsToSend))
+
             #UDP: send pickled data
-            udpSocket.sendto(packetsToSend[packetCounter], (benIP,udpPort))
+            if missingPackets[packetCounter] == "0":
+                udpSocket.sendto(packetsToSend[packetCounter], (benIP,udpPort))
 
             # Increment packet counter
             packetCounter += 1
 
             # If all packets are sent, send all done message
-            if packetCounter == len(packetsToSend):
+            if packetCounter == numPackets:
                 tcpSocket.send("All done")
 
                 # Receive list of missed packets
                 missingPacketsPickled = tcpSocket.recv(packetSize)
                 missingPackets = pickle.loads(missingPacketsPickled)
 
-                # Parse missing packets 
-                packetsToSend = parseMissingPackets(packetsToSend, missingPackets)
-
                 # Reset for next set of packets to send
                 packetCounter = 0
-
-                # If we missed no packets, break
-                if len(packetsToSend) == 0:
-                    break
 
 
 
