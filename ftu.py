@@ -139,7 +139,7 @@ def main(argv):
             stepSize = packetSize - 14;
             numPackets = int(math.ceil(float(len(dataToSend))/ float(stepSize)))
             packetsToSend = [None] * numPackets
-            for igit  in range(numPackets):
+            for i in range(numPackets):
                 indexStr = str(i)
                 indexStr = "0" * (13 - len(indexStr)) + indexStr
                 dataOffset = i * stepSize
