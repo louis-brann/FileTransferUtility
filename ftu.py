@@ -50,6 +50,8 @@ def main(argv):
         currentWindow = 0
         numWindows = 2
         while currentWindow < numWindows:
+            print "currentWindow: " + str(currentWindow)
+            print "numWindows: " + str(numWindows)
 
             establishedTcp.setblocking(1)
 
@@ -66,11 +68,14 @@ def main(argv):
         
             #Make data-structures to put data from udpSocket
             fileName, numPackets, numWindows = fileMetadata
+            print "numWindows: " + str(numWindows)
             fileBuffer = [None] * numPackets
             while True:
+                print "looping!"
                 # If there is a packet, receive it
                 udpReady = select.select([udpSocket], [], [], 1)
                 if udpReady[0]:
+                    print "got udp!"
                     currentPacket, addr = udpSocket.recvfrom(packetSize)
 
                     # Put packet data into file buffer
@@ -79,6 +84,8 @@ def main(argv):
                     packetData = currentPacket[14:]
 
                     fileBuffer[packetIndex] = copy.deepcopy(packetData)
+
+                    print "endof getting udp"
 
                 # Check for done signal
                 tcpReady = select.select([establishedTcp], [], [], .01)
@@ -90,13 +97,15 @@ def main(argv):
 
                     print "missing packets: " + missingPackets
 
-                    currentWindow += 1
+                    
 
                     #send this information to sender as bitset
                     establishedTcp.send(missingPackets)
 
                     #if we have received all data, break and close connections
                     if "0" not in missingPackets:
+                        print "no missing packets"
+                        currentWindow += 1
                         break
 
             # Close all connections
