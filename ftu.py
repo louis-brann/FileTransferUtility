@@ -94,7 +94,8 @@ def main(argv):
         #socket.close(establishedTcp)
         #socket.close(udpSocket)
 
-        outString = pickle.loads("".join(fileBuffer))
+        #outString = pickle.loads("".join(fileBuffer))
+        outString = "".join(fileBuffer)
 
         outFile = open(fileName, 'wb')
         outFile.write(outString)
@@ -125,50 +126,54 @@ def main(argv):
 
         #Open file and put data into dataToSend
         inFile = open(fileName, 'r')
-        fileSize = os.path.getsize()
+        fileSize = os.path.getsize(fileName)
+        numWindows = int(math.ceil(float(fileSize) / float(windowSize)))
 
-        dataToSend = inFile.read()
-        dataToSendPickled = pickle.dumps(dataToSend)
+        dataToSend = [None] * numWindows
+        for i in range(numWindows):
+            dataToSend = inFile.read(windowSize * i)
 
-        # Get packets to send
-        stepSize = packetSize - 14;
-        numPackets = int(math.ceil(float(len(dataToSendPickled))/ float(stepSize)))
-        packetsToSend = [None] * numPackets
-        for i in range(numPackets):
-            indexStr = str(i)
-            indexStr = "0" * (13 - len(indexStr)) + indexStr
-            dataOffset = i * stepSize
-            packetsToSend[i] = indexStr + " " + dataToSendPickled[dataOffset:dataOffset + stepSize]
+            #dataToSendPickled = pickle.dumps(dataToSend)
 
-        #TCP: Send fileName and numPackets to send
-        fileMetadata = (fileName, numPackets)
-        fileMetadataPickled = pickle.dumps(fileMetadata)
-        tcpSocket.send(fileMetadataPickled)
+            # Split window into packetsToSend
+            stepSize = packetSize - 14;
+            numPackets = int(math.ceil(float(len(dataToSendPickled))/ float(stepSize)))
+            packetsToSend = [None] * numPackets
+            for i in range(numPackets):
+                indexStr = str(i)
+                indexStr = "0" * (13 - len(indexStr)) + indexStr
+                dataOffset = i * stepSize
+                packetsToSend[i] = indexStr + " " + dataToSendPickled[dataOffset:dataOffset + stepSize]
 
-        # Go through entire file, sending all packets until known to be transferred
-        packetCounter = 0
-        missingPackets = "0" * numPackets
-        while missingPackets != "1" * numPackets:
-            #UDP: send pickled data
-            if missingPackets[packetCounter] == "0":
-                udpSocket.sendto(packetsToSend[packetCounter], (destIP,udpPort))
+            #TCP: Send fileName and numPackets to send
+            fileMetadata = (fileName, numPackets)
+            fileMetadataPickled = pickle.dumps(fileMetadata)
+            tcpSocket.send(fileMetadataPickled)
 
-            # Increment packet counter
-            packetCounter += 1
+            # Go through entire file, sending all packets until known to be transferred
+            packetCounter = 0
+            missingPackets = "0" * numPackets
+            while missingPackets != "1" * numPackets:
+                #UDP: send pickled data
+                if missingPackets[packetCounter] == "0":
+                    udpSocket.sendto(packetsToSend[packetCounter], (destIP,udpPort))
 
-            # If all packets are sent, send all done message
-            if packetCounter == numPackets:
-                tcpSocket.send("All done")
+                # Increment packet counter
+                packetCounter += 1
 
-                # Receive list of missed packets
-                missingPacketsPickled = tcpSocket.recv(packetSize)
-                missingPackets = pickle.loads(missingPacketsPickled)
+                # If all packets are sent, send all done message
+                if packetCounter == numPackets:
+                    tcpSocket.send("All done")
 
-                numMissing = missingPackets.count("0")
-                print "%" + " done: " + str(1 - float(numMissing)/numPackets)
+                    # Receive list of missed packets
+                    missingPacketsPickled = tcpSocket.recv(packetSize)
+                    missingPackets = pickle.loads(missingPacketsPickled)
 
-                # Reset for next set of packets to send
-                packetCounter = 0
+                    numMissing = missingPackets.count("0")
+                    print "%" + " done: " + str(1 - float(numMissing)/numPackets)
+
+                    # Reset for next set of packets to send
+                    packetCounter = 0
 
 
 
