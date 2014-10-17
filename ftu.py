@@ -144,9 +144,11 @@ def main(argv):
         inFile = open(fileName, 'r')
         fileSize = os.path.getsize(fileName)
         numWindows = int(math.ceil(float(fileSize) / float(windowSize)))
+        print "numWindow : " + str(numWindows)
 
         dataToSend = [None] * numWindows
         for i in range(numWindows):
+            print "out of while loop"
             dataToSend = inFile.read(windowSize)
 
             # Split window into packetsToSend
@@ -164,12 +166,15 @@ def main(argv):
             fileMetadataPickled = pickle.dumps(fileMetadata)
             tcpSocket.send(fileMetadataPickled)
 
+
             # Go through entire file, sending all packets until known to be transferred
             packetCounter = 0
             missingPackets = "0" * numPackets
             while missingPackets != "1" * numPackets:
+                print "in the inner while loop"
                 #UDP: send pickled data
                 if missingPackets[packetCounter] == "0":
+                    print "bout to send"
                     udpSocket.sendto(packetsToSend[packetCounter], (destIP,udpPort))
 
                 # Increment packet counter
@@ -178,11 +183,13 @@ def main(argv):
                 # If all packets are sent, send all done message
                 if packetCounter == numPackets:
                     tcpSocket.send("All done")
+                    print "Sent all done!"
 
                     # Receive list of missed packets
                     missingPackets = tcpSocket.recv(packetSize)
                     print "missingPackets: " + missingPackets
-
+                    print "checking against: " + numPackets * "1"
+ 
                     numMissing = missingPackets.count("0")
                     print "%" + " done: " + str(1 - float(numMissing)/numPackets)
 
