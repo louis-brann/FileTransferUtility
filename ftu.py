@@ -49,7 +49,7 @@ def main(argv):
 
         currentWindow = 0
         numWindows = 2
-        while currentWindow + 1 < numWindows:
+        while currentWindow < numWindows:
 
             establishedTcp.setblocking(1)
 
@@ -69,19 +69,14 @@ def main(argv):
             fileBuffer = [None] * numPackets
             while True:
                 # If there is a packet, receive it
-                udpReady = select.select([udpSocket], [], [], .01)
+                udpReady = select.select([udpSocket], [], [], 1)
                 if udpReady[0]:
                     currentPacket, addr = udpSocket.recvfrom(packetSize)
-
-                    print "currentPacket: " + str(currentPacket[:13])
 
                     # Put packet data into file buffer
                     packetIndex = int(currentPacket[:13])
                     
                     packetData = currentPacket[14:]
-
-                    print "packetIndex: " + str(packetIndex)
-
 
                     fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
@@ -93,14 +88,16 @@ def main(argv):
                     #check which packets are missing
                     missingPackets = getMissingPackets(fileBuffer)
 
+                    print "missing packets: " + missingPackets
+
+                    currentWindow += 1
+
                     #send this information to sender as bitset
                     establishedTcp.send(missingPackets)
 
                     #if we have received all data, break and close connections
                     if "0" not in missingPackets:
                         break
-
-                currentWindow += 1
 
             # Close all connections
             # socket.shutdown(tcpSocket)
@@ -112,7 +109,7 @@ def main(argv):
             #outString = pickle.loads("".join(fileBuffer))
             outString = "".join(fileBuffer)
 
-            if currentWindow == 0:
+            if currentWindow - 1 == 0:
                 outFile = open(fileName, 'w')
             else:
                 outFile = open(fileName, 'a')
