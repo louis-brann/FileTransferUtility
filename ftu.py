@@ -48,6 +48,7 @@ def main(argv):
         #make UDP socket
         udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udpSocket.bind(("", udpPort))
+        udpSocket.setblocking(0)
 
         #make TCP socket
         tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,36 +66,42 @@ def main(argv):
         print fileMetadata
 
         # We want future recv calls to be non-blocking
-        tcpSocket.setblocking(0)
+        establishedTcp.setblocking(0)
 
         #Make datastructures to put data from udpSocket
         fileName, fileSize = fileMetadata
         numPackets = int(math.ceil(float(fileSize) / float(packetSize)))
         fileBuffer = [None] * numPackets
         while True:
-            # Receive packet
-            currentPacketPickled, addr = udpSocket.recvfrom(packetSize)
-            currentPacket = pickle.loads(currentPacketPickled)
+            print "=== TOP ==="
+            # If there is a packet, receive it
+            ready = select.select([udpSocket], [], [], .1)
+            if ready[0]:
+                currentPacketPickled, addr = udpSocket.recvfrom(packetSize)
+                currentPacket = pickle.loads(currentPacketPickled)
 
-            # Put packet data into file buffer
-            packetIndex, packetDataPickled = currentPacket
-            packetData = pickle.dumps(packetDataPickled)
-            fileBuffer[packetIndex] = copy.deepcopy(packetData)
+                # Put packet data into file buffer
+                packetIndex, packetDataPickled = currentPacket
+                packetData = pickle.dumps(packetDataPickled)
+                fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
             # Check for done signal
-            ready = select.select([tcpSocket], [], [], .01)
+            ready = select.select([establishedTcp], [], [], .1)
             if ready[0]:
-                data = tcpSocket.recv(packetSize)
+                print "received all done"
+                data = establishedTcp.recv(packetSize)
+
+                # We know the sender is done sending
                 allDone = 1
 
-            # If we receive "done" signal
+            # If the sender is done sending
             if allDone:
                 #check which packets are missing
-                missingPackets = checkMissingPackets(fileBuffer)
+                missingPackets = getMissingPackets(fileBuffer)
 
                 #send this information to sender as bitset
                 missingPacketsPickled = pickle.dumps(missingPackets)
-                tcpSocket.send(missingPacketsPickled)
+                establishedTcp.send(missingPacketsPickled)
 
                 #if we have received all data, break and close connections
                 if int(missingPackets) == 0:
@@ -103,6 +110,8 @@ def main(argv):
         # Close all connections
         socket.shutdown(tcpSocket)
         socket.close(tcpSocket)
+        socket.shutdown(establishedTcp)
+        socket.close(establishedTcp)
         socket.close(udpSocket)
 
         print fileBuffer
