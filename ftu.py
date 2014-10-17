@@ -33,6 +33,7 @@ def main(argv):
     fileName = "random.txt"
     allDone  = False
     packetSize = 1024
+    windowSize = 32 * packetSize
     
     #Receiver
     if len(argv) == 0:
@@ -122,6 +123,8 @@ def main(argv):
 
         #Open file and put data into dataToSend
         inFile = open(fileName, 'r')
+        fileSize = os.path.getsize()
+
         dataToSend = inFile.read()
         dataToSendPickled = pickle.dumps(dataToSend)
 
