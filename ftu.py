@@ -12,7 +12,7 @@ def main(argv):
     tcpPort  = 44001
     louieIP  = "134.173.42.215"
     benIP    = "134.173.42.9"
-    filePath = "/mnt/home/bgoldberg/Desktop/CS125/FileTransferUtility/example.txt"
+    filePath = "/Users/Guest/Desktop/FileTransferUtility/example.txt"
     fileName = "example.txt"
     allDone  = False
     
@@ -40,10 +40,12 @@ def main(argv):
         #Make datastructures to put data from udpSocket
         fileBuffer = [fileMetadata[1]]
         while True:
-
+            # Receive packet
             currentPacketPickled, addr = udpSocket.recvfrom(1024)
-            packetIndex, packetData = pickle.loads(currentPacketPickled)
+            currentPacket = pickle.loads(currentPacketPickled)
 
+            # Put packet data into file buffer
+            packetIndex, packetData = currentPacket
             fileBuffer[packetIndex] = copy.deepCopy(packetData)
            
             break
@@ -77,7 +79,7 @@ def main(argv):
         tcpSocket.send(fileMetadataPickled)
 
         #Open file and put data into dataToSend
-        inFile = open(fileName, r)
+        inFile = open(fileName, 'r')
         dataToSend = inFile.read()
 
         #UDP: send pickled data
