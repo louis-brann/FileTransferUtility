@@ -57,8 +57,8 @@ def main(argv):
 
         print fileBuffer
 
-        outFile1 = open(fileName, 'wb')
-        outFile1.write("".join(fileBuffer))
+        outFile = open(fileName, 'wb')
+        outFile.write("".join(fileBuffer))
 
     #Sender
     else:
