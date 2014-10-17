@@ -66,7 +66,7 @@ def main(argv):
 
         #Make datastructures to put data from udpSocket
         fileName, fileSize = fileMetadata
-        numPackets = math.ceil(float(fileSize) / float(packetSize))
+        numPackets = int(math.ceil(float(fileSize) / float(packetSize)))
         fileBuffer = [None] * numPackets
         while True:
             # Receive packet
@@ -123,7 +123,6 @@ def main(argv):
 
         #make TCP socket
         tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcpSocket.setblocking(0)
         tcpSocket.connect((benIP, tcpPort))
 
         #get filesize
@@ -143,7 +142,7 @@ def main(argv):
         packetsToSend = [(i, dataToSendPickled[i:i + packetSize]) for i in range(0, len(dataToSendPickled), packetSize)]
 
         # Go through entire file, sending all packets until known to be transferred
-        numPackets = math.ceil(float(fileSize) / float(packetSize))
+        numPackets = int(math.ceil(float(fileSize) / float(packetSize)))
         packetCounter = 0
         while True:
 
@@ -152,7 +151,7 @@ def main(argv):
             udpSocket.sendto(packetPickled, (benIP,udpPort))
 
             # Increment packet index
-            packetIndex += 1 
+            packetCounter += 1 
 
             # If all packets are sent, send all done message
             if packetCounter + 1 == len(packetsToSend):
