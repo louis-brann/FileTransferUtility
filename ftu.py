@@ -82,6 +82,8 @@ def main(argv):
         inFile = open(fileName, 'r')
         dataToSend = inFile.read()
 
+        dataToSend = (0, dataToSend)
+
         #UDP: send pickled data
         dataToSendPickled = pickle.dumps(dataToSend)
         udpSocket.sendto(dataToSendPickled, (benIP,udpPort))
