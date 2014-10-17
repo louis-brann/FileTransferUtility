@@ -75,40 +75,23 @@ def main(argv):
         fileName, numPackets = fileMetadata
         fileBuffer = [None] * numPackets
         while True:
-            print "=== TOP ==="
             # If there is a packet, receive it
             udpReady = select.select([udpSocket], [], [], .01)
             if udpReady[0]:
-                print "received UDP packet"
                 currentPacket, addr = udpSocket.recvfrom(packetSize)
 
                 # Put packet data into file buffer
                 packetIndex = int(currentPacket[:13])
                 packetData = currentPacket[14:]
-
-
-                print "packetIndex " + str(packetIndex)
-                print "packetData " + str(packetData)
                 fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
             # Check for done signal
             tcpReady = select.select([establishedTcp], [], [], .01)
             if tcpReady[0]:
-                print "received all done"
                 data = establishedTcp.recv(packetSize)
-                print "data: " + str(data)
-
-                # We know the sender is done sending
-            #     allDone = 1
-
-            # # If the sender is done sending
-            # if allDone:
-            #     # Reset allDone for next round
-            #     allDone = 0
 
                 #check which packets are missing
                 missingPackets = getMissingPackets(fileBuffer)
-                print "Missing packets: " + str(missingPackets)
 
                 #send this information to sender as bitset
                 missingPacketsPickled = pickle.dumps(missingPackets)
