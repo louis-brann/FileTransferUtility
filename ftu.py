@@ -47,58 +47,65 @@ def main(argv):
         #TCP: Accept incoming handshake 
         establishedTcp, addr = tcpSocket.accept()
 
-        fileMetadataPickled = establishedTcp.recv(packetSize)
-        if not fileMetadataPickled:
-            print "no data"
-            sys.exit(2)
-        fileMetadata = pickle.loads(fileMetadataPickled)
-        print fileMetadata
+        currentWindow = 0
+        numWindows = 2
+        while currentWindow + 1 < numWindows
 
-        # We want future recv calls to be non-blocking
-        establishedTcp.setblocking(0)
+            establishedTcp.setblocking(1)
 
-        #Make datastructures to put data from udpSocket
-        fileName, numPackets = fileMetadata
-        fileBuffer = [None] * numPackets
-        while True:
-            # If there is a packet, receive it
-            udpReady = select.select([udpSocket], [], [], .01)
-            if udpReady[0]:
-                currentPacket, addr = udpSocket.recvfrom(packetSize)
+            fileMetadataPickled = establishedTcp.recv(packetSize)
+            if not fileMetadataPickled:
+                print "no data"
+                sys.exit(2)
+            fileMetadata = pickle.loads(fileMetadataPickled)
+            print fileMetadata
 
-                # Put packet data into file buffer
-                packetIndex = int(currentPacket[:13])
-                packetData = currentPacket[14:]
-                fileBuffer[packetIndex] = copy.deepcopy(packetData)
+            # We want future recv calls to be non-blocking
+            establishedTcp.setblocking(0)
 
-            # Check for done signal
-            tcpReady = select.select([establishedTcp], [], [], .01)
-            if tcpReady[0]:
-                data = establishedTcp.recv(packetSize)
+        
+            #Make datastructures to put data from udpSocket
+            fileName, numPackets, numWindows = fileMetadata
+            fileBuffer = [None] * numPackets
+            while True:
+                # If there is a packet, receive it
+                udpReady = select.select([udpSocket], [], [], .01)
+                if udpReady[0]:
+                    currentPacket, addr = udpSocket.recvfrom(packetSize)
 
-                #check which packets are missing
-                missingPackets = getMissingPackets(fileBuffer)
+                    # Put packet data into file buffer
+                    packetIndex = int(currentPacket[:13])
+                    packetData = currentPacket[14:]
+                    fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
-                #send this information to sender as bitset
-                missingPacketsPickled = pickle.dumps(missingPackets)
-                establishedTcp.send(missingPacketsPickled)
+                # Check for done signal
+                tcpReady = select.select([establishedTcp], [], [], .01)
+                if tcpReady[0]:
+                    data = establishedTcp.recv(packetSize)
 
-                #if we have received all data, break and close connections
-                if "0" not in missingPackets:
-                    break
+                    #check which packets are missing
+                    missingPackets = getMissingPackets(fileBuffer)
 
-        # Close all connections
-        # socket.shutdown(tcpSocket)
-        # socket.close(tcpSocket)
-        #socket.shutdown(establishedTcp)
-        #socket.close(establishedTcp)
-        #socket.close(udpSocket)
+                    #send this information to sender as bitset
+                    missingPacketsPickled = pickle.dumps(missingPackets)
+                    establishedTcp.send(missingPacketsPickled)
 
-        #outString = pickle.loads("".join(fileBuffer))
-        outString = "".join(fileBuffer)
+                    #if we have received all data, break and close connections
+                    if "0" not in missingPackets:
+                        break
 
-        outFile = open(fileName, 'wb')
-        outFile.write(outString)
+            # Close all connections
+            # socket.shutdown(tcpSocket)
+            # socket.close(tcpSocket)
+            #socket.shutdown(establishedTcp)
+            #socket.close(establishedTcp)
+            #socket.close(udpSocket)
+
+            #outString = pickle.loads("".join(fileBuffer))
+            outString = "".join(fileBuffer)
+
+            outFile = open(fileName, 'a')
+            outFile.write(outString)
 
     #Sender
     else:
@@ -146,7 +153,7 @@ def main(argv):
                 packetsToSend[i] = indexStr + " " + dataToSend[dataOffset:dataOffset + stepSize]
 
             #TCP: Send fileName and numPackets to send
-            fileMetadata = (fileName, numPackets)
+            fileMetadata = (fileName, numPackets, numWindows)
             fileMetadataPickled = pickle.dumps(fileMetadata)
             tcpSocket.send(fileMetadataPickled)
 
