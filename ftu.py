@@ -7,6 +7,7 @@ import copy
 import sys
 import numpy
 import os
+import math
 
 def main(argv):
     udpPort  = 44000
@@ -16,6 +17,7 @@ def main(argv):
     filePath = "/Users/Guest/Desktop/FileTransferUtility/example.txt"
     fileName = "example.txt"
     allDone  = False
+    packetSize = 1024
     
     #Receiver
     if len(argv) == 0:
@@ -56,7 +58,7 @@ def main(argv):
         print fileBuffer
 
         outFile = open(fileName, 'wb')
-        ndarray.tofile(outFile)
+        numpy.ndarray.tofile(outFile)
 
 
     #Sender
