@@ -155,9 +155,15 @@ def main(argv):
         #Open file and put data into dataToSend
         inFile = open(fileName, 'r')
         dataToSend = inFile.read()
+        dataToSendPickled = pickle.dumps(dataToSend)
 
         # Get packets to send
-        packetsToSend = [(i, dataToSend[i:i + packetSize - ]) for i in range(0, len(dataToSend), packetSize)]
+        int stepSize = packetSize - 14;
+        for i in range(len(0, dataToSendPickled, stepSize)):
+            indexStr = str(i)
+            indexStr = "0" * (13 - len(indexStr)) + indexStr
+            dataOffset = i * stepSize
+            packetsToSend[i] = indexStr + " " + dataToSendPickled[dataOffset:dataOffset + stepSize]
 
         # Go through entire file, sending all packets until known to be transferred
         packetCounter = 0
@@ -165,8 +171,7 @@ def main(argv):
             print "packetCounter " + str(packetCounter)
             print "len(packetsToSend) " + str(len(packetsToSend))
             #UDP: send pickled data
-            packetPickled = pickle.dumps(packetsToSend[packetCounter])
-            udpSocket.sendto(packetPickled, (benIP,udpPort))
+            udpSocket.sendto(packetsToSend[packetCounter], (benIP,udpPort))
 
             # Increment packet counter
             packetCounter += 1
