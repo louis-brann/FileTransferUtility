@@ -5,6 +5,7 @@ import socket
 import pickle
 import copy
 import sys
+import numpy
 import os
 
 def main(argv):
@@ -38,7 +39,9 @@ def main(argv):
         print fileMetadata
 
         #Make datastructures to put data from udpSocket
-        fileBuffer = [fileMetadata[1]]
+        fileName, fileSize = fileMetadata
+        numPackets = math.ceil(float(fileSize) / float(packetSize))
+        fileBuffer = [numPackets]
         while True:
             # Receive packet
             currentPacketPickled, addr = udpSocket.recvfrom(1024)
@@ -49,7 +52,11 @@ def main(argv):
             fileBuffer[packetIndex] = copy.deepcopy(packetData)
            
             break
+
         print fileBuffer
+
+        outFile = open(fileName, 'wb')
+        ndarray.tofile(outFile)
 
 
     #Sender
