@@ -40,8 +40,8 @@ def main(argv):
     tcpPort  = 44001
     louieIP  = "134.173.42.215"
     benIP    = "134.173.42.9"
-    filePath = "/Users/Guest/Desktop/FileTransferUtility/random.txt"
-    fileName = "random.txt"
+    filePath = "/Users/Guest/Desktop/FileTransferUtility/random.bin"
+    fileName = "random.bin"
     allDone  = False
     packetSize = 1024
     
@@ -174,10 +174,6 @@ def main(argv):
         packetCounter = 0
         missingPackets = "0" * numPackets
         while missingPackets != "1" * numPackets:
-            print "missingPackets " + missingPackets
-            print "packetCounter " + str(packetCounter)
-            print "len(packetsToSend) " + str(len(packetsToSend))
-
             #UDP: send pickled data
             if missingPackets[packetCounter] == "0":
                 udpSocket.sendto(packetsToSend[packetCounter], (benIP,udpPort))
