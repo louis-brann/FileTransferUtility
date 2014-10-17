@@ -3,15 +3,18 @@
 
 import socket
 import pickle
+import copy
 import sys
 import os
 
 def main():
-    udpPort = 44000
-    tcpPort = 44001
-    destIP = "134.173.42.214"
+    udpPort  = 44000
+    tcpPort  = 44001
+    louieIP  = "134.173.42.215"
+    benIP    = "134.173.42.9"
     filePath = "/mnt/home/bgoldberg/Desktop/CS125/FileTransferUtility/example.txt"
     fileName = "example.txt"
+    allDone  = False
     
     #Receiver
     if len(sys.argv) == 1:
@@ -35,9 +38,14 @@ def main():
         print fileMetadata
 
         #Make datastructures to put data from udpSocket
+        fileBuffer = [fileMetadata[1]]
         while True:
-            fileBufferPickled, addr = udpSocket.recvfrom(1024)
-            fileBuffer = pickle.loads(fileBufferPickled)
+
+            currentPacketPickled, addr = udpSocket.recvfrom(1024)
+            packetIndex, packetData = pickle.loads(currentPacketPickled)
+
+            fileBuffer[packetIndex] = copy.deepCopy(packetData)
+           
             break
         print fileBuffer
 
@@ -50,7 +58,7 @@ def main():
 
         #make TCP socket
         tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcpSocket.connect((destIP, tcpPort))
+        tcpSocket.connect((benIP, tcpPort))
 
         #get filesize
         fileSize = os.path.getsize(filePath)
@@ -66,7 +74,7 @@ def main():
 
         #UDP: send pickled data
         dataToSendPickled = pickle.dumps(dataToSend)
-        udpSocket.sendto(dataToSendPickled, (destIP,udpPort))
+        udpSocket.sendto(dataToSendPickled, (benIP,udpPort))
 
 
 
