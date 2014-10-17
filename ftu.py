@@ -184,6 +184,7 @@ def main(argv):
 
                     # Receive list of missed packets
                     missingPackets = tcpSocket.recv(packetSize)
+                    print "missingPackets: " + missingPackets
 
                     numMissing = missingPackets.count("0")
                     print "%" + " done: " + str(1 - float(numMissing)/numPackets)
