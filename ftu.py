@@ -77,12 +77,14 @@ def main(argv):
             # If there is a packet, receive it
             ready = select.select([udpSocket], [], [], .1)
             if ready[0]:
+                print "received UDP packet"
                 currentPacketPickled, addr = udpSocket.recvfrom(packetSize)
                 currentPacket = pickle.loads(currentPacketPickled)
 
                 # Put packet data into file buffer
                 packetIndex, packetDataPickled = currentPacket
-                packetData = pickle.dumps(packetDataPickled)
+                packetData = pickle.loads(packetDataPickled)
+                print "packetData " + str(packetData)
                 fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
             # Check for done signal
@@ -90,29 +92,34 @@ def main(argv):
             if ready[0]:
                 print "received all done"
                 data = establishedTcp.recv(packetSize)
+                print "data: " + str(data)
 
                 # We know the sender is done sending
-                allDone = 1
+            #     allDone = 1
 
-            # If the sender is done sending
-            if allDone:
+            # # If the sender is done sending
+            # if allDone:
+            #     # Reset allDone for next round
+            #     allDone = 0
+
                 #check which packets are missing
                 missingPackets = getMissingPackets(fileBuffer)
+                print "Missing packets: " + str(missingPackets)
 
                 #send this information to sender as bitset
                 missingPacketsPickled = pickle.dumps(missingPackets)
                 establishedTcp.send(missingPacketsPickled)
 
                 #if we have received all data, break and close connections
-                if int(missingPackets) == 0:
+                if "0" not in missingPackets:
                     break
 
         # Close all connections
-        socket.shutdown(tcpSocket)
-        socket.close(tcpSocket)
-        socket.shutdown(establishedTcp)
-        socket.close(establishedTcp)
-        socket.close(udpSocket)
+        # socket.shutdown(tcpSocket)
+        # socket.close(tcpSocket)
+        #socket.shutdown(establishedTcp)
+        #socket.close(establishedTcp)
+        #socket.close(udpSocket)
 
         print fileBuffer
 
