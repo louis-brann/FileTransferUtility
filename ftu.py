@@ -131,19 +131,19 @@ def main(argv):
 
         dataToSend = [None] * numWindows
         for i in range(numWindows):
-            dataToSend = inFile.read(windowSize * i)
+            dataToSend = inFile.read(windowSize)
 
             #dataToSendPickled = pickle.dumps(dataToSend)
 
             # Split window into packetsToSend
             stepSize = packetSize - 14;
-            numPackets = int(math.ceil(float(len(dataToSendPickled))/ float(stepSize)))
+            numPackets = int(math.ceil(float(len(dataToSend))/ float(stepSize)))
             packetsToSend = [None] * numPackets
             for i in range(numPackets):
                 indexStr = str(i)
                 indexStr = "0" * (13 - len(indexStr)) + indexStr
                 dataOffset = i * stepSize
-                packetsToSend[i] = indexStr + " " + dataToSendPickled[dataOffset:dataOffset + stepSize]
+                packetsToSend[i] = indexStr + " " + dataToSend[dataOffset:dataOffset + stepSize]
 
             #TCP: Send fileName and numPackets to send
             fileMetadata = (fileName, numPackets)
