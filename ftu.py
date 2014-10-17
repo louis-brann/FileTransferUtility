@@ -17,7 +17,7 @@ def main(argv):
     allDone  = False
     
     #Receiver
-    if len(argv) == 1:
+    if len(argv) == 0:
 
         #make UDP socket
         udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -53,9 +53,9 @@ def main(argv):
     #Sender
     else:
         # #parse command line inputs
-        # if len(argv) == 3:
-        #     source = argv[1]
-        #     dest = argv[2]
+        # if len(argv) == 2:
+        #     source = argv[0]
+        #     dest = argv[1]
         # else:
         #     print 'ftu.py <source> <dest>'
         #     sys.exit(2)
@@ -90,4 +90,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main() 
+    main(sys.argv[1:]) 
