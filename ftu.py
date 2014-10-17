@@ -1,12 +1,12 @@
 # Ben Goldberg and Louie Brann
 # File Transfer Utility
 
-import socket
+import sys, os
+import socket, select
 import pickle
 import copy
-import sys, os
 import math
-import select
+
 
 def getMissingPackets(fileBuffer):
     """
@@ -169,8 +169,6 @@ def main(argv):
             if packetCounter == len(packetsToSend):
                 tcpSocket.send("All done")
 
-                print "Sent all done"
-
                 # Receive list of missed packets
                 missingPacketsPickled = tcpSocket.recv(packetSize)
                 missingPackets = pickle.loads(missingPacketsPickled)
@@ -184,13 +182,6 @@ def main(argv):
                 # If we missed no packets, break
                 if len(packetsToSend) == 0:
                     break
-
-             
-
-        # Close all connections
-        socket.shutdown(tcpSocket)
-        socket.close(tcpSocket)
-        socket.close(udpSocket)
 
 
 
