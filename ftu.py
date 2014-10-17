@@ -7,7 +7,7 @@ import copy
 import sys
 import os
 
-def main():
+def main(argv):
     udpPort  = 44000
     tcpPort  = 44001
     louieIP  = "134.173.42.215"
@@ -17,7 +17,7 @@ def main():
     allDone  = False
     
     #Receiver
-    if len(sys.argv) == 1:
+    if len(argv) == 1:
 
         #make UDP socket
         udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -52,6 +52,14 @@ def main():
 
     #Sender
     else:
+        # #parse command line inputs
+        # if len(argv) == 3:
+        #     source = argv[1]
+        #     dest = argv[2]
+        # else:
+        #     print 'ftu.py <source> <dest>'
+        #     sys.exit(2)
+        
         
         #make UDP socket
         udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
