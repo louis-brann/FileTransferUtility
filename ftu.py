@@ -94,7 +94,7 @@ def main(argv):
                     missingPackets = getMissingPackets(fileBuffer)
 
                     #send this information to sender as bitset
-                    missingPackets = pickle.dumps(missingPackets)
+                    establishedTcp.send(missingPackets)
 
                     #if we have received all data, break and close connections
                     if "0" not in missingPackets:
