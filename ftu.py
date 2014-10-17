@@ -75,20 +75,19 @@ def main(argv):
         while True:
             print "=== TOP ==="
             # If there is a packet, receive it
-            ready = select.select([udpSocket], [], [], .1)
+            ready = select.select([udpSocket], [], [], .01)
             if ready[0]:
                 print "received UDP packet"
-                currentPacketPickled, addr = udpSocket.recvfrom(packetSize)
+                currentPacketPickled, addr = udpSocket.recvfrom(2*packetSize)
                 currentPacket = pickle.loads(currentPacketPickled)
 
                 # Put packet data into file buffer
-                packetIndex, packetDataPickled = currentPacket
-                packetData = pickle.loads(packetDataPickled)
+                packetIndex, packetData = currentPacket
                 print "packetData " + str(packetData)
                 fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
             # Check for done signal
-            ready = select.select([establishedTcp], [], [], .1)
+            ready = select.select([establishedTcp], [], [], .01)
             if ready[0]:
                 print "received all done"
                 data = establishedTcp.recv(packetSize)
