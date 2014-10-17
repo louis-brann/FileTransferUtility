@@ -72,14 +72,13 @@ def main(argv):
         establishedTcp.setblocking(0)
 
         #Make datastructures to put data from udpSocket
-        fileName, fileSize = fileMetadata
-        numPackets = int(math.ceil(float(fileSize) / float(packetSize)))
+        fileName, numPackets = fileMetadata
         fileBuffer = [None] * numPackets
         while True:
             print "=== TOP ==="
             # If there is a packet, receive it
-            ready = select.select([udpSocket], [], [], .01)
-            if ready[0]:
+            udpReady = select.select([udpSocket], [], [], .01)
+            if udpReady[0]:
                 print "received UDP packet"
                 currentPacket, addr = udpSocket.recvfrom(packetSize)
 
@@ -87,12 +86,14 @@ def main(argv):
                 packetIndex = int(currentPacket[:13])
                 packetData = currentPacket[14:]
 
+
+                print "packetIndex " + str(packetIndex)
                 print "packetData " + str(packetData)
                 fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
             # Check for done signal
-            ready = select.select([establishedTcp], [], [], .01)
-            if ready[0]:
+            tcpReady = select.select([establishedTcp], [], [], .01)
+            if tcpReady[0]:
                 print "received all done"
                 data = establishedTcp.recv(packetSize)
                 print "data: " + str(data)
@@ -126,8 +127,10 @@ def main(argv):
 
         print fileBuffer
 
+        outString = pickle.loads("".join(fileBuffer))
+
         outFile = open(fileName, 'wb')
-        outFile.write("".join(fileBuffer))
+        outFile.write(outString)
 
     #Sender
     else:
