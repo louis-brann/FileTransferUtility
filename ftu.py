@@ -49,7 +49,7 @@ def main(argv):
 
         currentWindow = 0
         numWindows = 2
-        while currentWindow + 1 < numWindows
+        while currentWindow + 1 < numWindows:
 
             establishedTcp.setblocking(1)
 
@@ -75,6 +75,7 @@ def main(argv):
 
                     # Put packet data into file buffer
                     packetIndex = int(currentPacket[:13])
+                    print "packetIndex: " + str(packetIndex)
                     packetData = currentPacket[14:]
                     fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
@@ -104,7 +105,11 @@ def main(argv):
             #outString = pickle.loads("".join(fileBuffer))
             outString = "".join(fileBuffer)
 
-            outFile = open(fileName, 'a')
+            if currentWindow == 0:
+                outFile = open(fileName, 'w')
+            else:
+                outFile = open(fileName, 'a')
+
             outFile.write(outString)
 
     #Sender
@@ -140,17 +145,15 @@ def main(argv):
         for i in range(numWindows):
             dataToSend = inFile.read(windowSize)
 
-            #dataToSend = pickle.dumps(dataToSend)
-
             # Split window into packetsToSend
             stepSize = packetSize - 14;
             numPackets = int(math.ceil(float(len(dataToSend))/ float(stepSize)))
             packetsToSend = [None] * numPackets
-            for i in range(numPackets):
-                indexStr = str(i)
+            for j in range(numPackets):
+                indexStr = str(j)
                 indexStr = "0" * (13 - len(indexStr)) + indexStr
-                dataOffset = i * stepSize
-                packetsToSend[i] = indexStr + " " + dataToSend[dataOffset:dataOffset + stepSize]
+                dataOffset = j * stepSize
+                packetsToSend[j] = indexStr + " " + dataToSend[dataOffset:dataOffset + stepSize]
 
             #TCP: Send fileName and numPackets to send
             fileMetadata = (fileName, numPackets, numWindows)
