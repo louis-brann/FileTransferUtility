@@ -52,7 +52,6 @@ def main(argv):
         #make TCP socket
         tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcpSocket.bind(("", tcpPort))
-        tcpSocket.setblocking(0)
         tcpSocket.listen(1)
 
         #TCP: Accept incoming handshake 
@@ -61,8 +60,12 @@ def main(argv):
         fileMetadataPickled = establishedTcp.recv(packetSize)
         if not fileMetadataPickled:
             print "no data"
+            sys.exit(2)
         fileMetadata = pickle.loads(fileMetadataPickled)
         print fileMetadata
+
+        # We want future recv calls to be non-blocking
+        tcpSocket.setblocking(0)
 
         #Make datastructures to put data from udpSocket
         fileName, fileSize = fileMetadata
