@@ -64,7 +64,7 @@ def main(argv):
             establishedTcp.setblocking(0)
 
         
-            #Make datastructures to put data from udpSocket
+            #Make data-structures to put data from udpSocket
             fileName, numPackets, numWindows = fileMetadata
             fileBuffer = [None] * numPackets
             while True:
@@ -73,10 +73,16 @@ def main(argv):
                 if udpReady[0]:
                     currentPacket, addr = udpSocket.recvfrom(packetSize)
 
+                    print "currentPacket: " + str(currentPacket[:13])
+
                     # Put packet data into file buffer
                     packetIndex = int(currentPacket[:13])
-                    print "packetIndex: " + str(packetIndex)
+                    
                     packetData = currentPacket[14:]
+
+                    print "packetIndex: " + str(packetIndex)
+
+
                     fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
                 # Check for done signal
@@ -88,12 +94,13 @@ def main(argv):
                     missingPackets = getMissingPackets(fileBuffer)
 
                     #send this information to sender as bitset
-                    missingPacketsPickled = pickle.dumps(missingPackets)
-                    establishedTcp.send(missingPacketsPickled)
+                    missingPackets = pickle.dumps(missingPackets)
 
                     #if we have received all data, break and close connections
                     if "0" not in missingPackets:
                         break
+
+                currentWindow += 1
 
             # Close all connections
             # socket.shutdown(tcpSocket)
@@ -176,8 +183,7 @@ def main(argv):
                     tcpSocket.send("All done")
 
                     # Receive list of missed packets
-                    missingPacketsPickled = tcpSocket.recv(packetSize)
-                    missingPackets = pickle.loads(missingPacketsPickled)
+                    missingPackets = tcpSocket.recv(packetSize)
 
                     numMissing = missingPackets.count("0")
                     print "%" + " done: " + str(1 - float(numMissing)/numPackets)
