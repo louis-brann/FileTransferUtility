@@ -154,20 +154,22 @@ def main(argv):
         packetsToSend = [(i, dataToSendPickled[i:i + packetSize]) for i in range(0, len(dataToSendPickled), packetSize)]
 
         # Go through entire file, sending all packets until known to be transferred
-        numPackets = int(math.ceil(float(fileSize) / float(packetSize)))
         packetCounter = 0
         while True:
-
+            print "packetCounter " + str(packetCounter)
+            print "len(packetsToSend) " + str(len(packetsToSend))
             #UDP: send pickled data
             packetPickled = pickle.dumps(packetsToSend[packetCounter])
             udpSocket.sendto(packetPickled, (benIP,udpPort))
 
-            # Increment packet index
-            packetCounter += 1 
+            # Increment packet counter
+            packetCounter += 1
 
             # If all packets are sent, send all done message
-            if packetCounter + 1 == len(packetsToSend):
+            if packetCounter == len(packetsToSend):
                 tcpSocket.send("All done")
+
+                print "Sent all done"
 
                 # Receive list of missed packets
                 missingPacketsPickled = tcpSocket.recv(packetSize)
@@ -176,9 +178,14 @@ def main(argv):
                 # Parse missing packets 
                 packetsToSend = parseMissingPackets(packetsToSend, missingPackets)
 
+                # Reset for next set of packets to send
+                packetCounter = 0
+
                 # If we missed no packets, break
                 if len(packetsToSend) == 0:
                     break
+
+             
 
         # Close all connections
         socket.shutdown(tcpSocket)
