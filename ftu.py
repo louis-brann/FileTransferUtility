@@ -40,8 +40,8 @@ def main(argv):
     tcpPort  = 44001
     louieIP  = "134.173.42.215"
     benIP    = "134.173.42.9"
-    filePath = "/Users/Guest/Desktop/FileTransferUtility/random.bin"
-    fileName = "random.bin"
+    filePath = "/Users/Guest/Desktop/FileTransferUtility/random.txt"
+    fileName = "random.txt"
     allDone  = False
     packetSize = 1024
     
@@ -117,13 +117,13 @@ def main(argv):
 
     #Sender
     else:
-        # #parse command line inputs
-        # if len(argv) == 2:
-        #     source = argv[0]
-        #     dest = argv[1]
-        # else:
-        #     print 'ftu.py <source> <dest>'
-        #     sys.exit(2)
+        #parse command line inputs
+        if len(argv) == 2:
+            source = argv[0]
+            dest = argv[1]
+        else:
+            print 'ftu.py <source> <dest>'
+            sys.exit(2)
         
         
         #make UDP socket
@@ -171,6 +171,9 @@ def main(argv):
                 # Receive list of missed packets
                 missingPacketsPickled = tcpSocket.recv(packetSize)
                 missingPackets = pickle.loads(missingPacketsPickled)
+
+                numMissing = missingPackets.count("0")
+                print "%" + "done: " + str(numMissing/numPackets)
 
                 # Reset for next set of packets to send
                 packetCounter = 0
