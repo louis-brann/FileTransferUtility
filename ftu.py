@@ -24,17 +24,6 @@ def getMissingPackets(fileBuffer):
 
     return missingPackets
 
-def parseMissingPackets(packetsToSend, missingPackets):
-    """
-    Inputs: Array of packets we already sent
-            Bit string denoting which packets we missed
-    Outputs: An array of packets that need to be resent
-    """
-    print "packetsToSend Len: " + str(len(packetsToSend))
-    print "missingPackets Len: " + str(len(missingPackets))
-    # TODO
-    return [ packetsToSend[i] for i in range(len(missingPackets)) if missingPackets[i]=="0" ]
-
 def main(argv):
     udpPort  = 44000
     tcpPort  = 44001
@@ -107,8 +96,6 @@ def main(argv):
         #socket.shutdown(establishedTcp)
         #socket.close(establishedTcp)
         #socket.close(udpSocket)
-
-        print fileBuffer
 
         outString = pickle.loads("".join(fileBuffer))
 
