@@ -78,11 +78,12 @@ def main(argv):
             ready = select.select([udpSocket], [], [], .01)
             if ready[0]:
                 print "received UDP packet"
-                currentPacketPickled, addr = udpSocket.recvfrom(2*packetSize)
-                currentPacket = pickle.loads(currentPacketPickled)
+                currentPacket, addr = udpSocket.recvfrom(packetSize)
 
                 # Put packet data into file buffer
-                packetIndex, packetData = currentPacket
+                packetIndex = int(currentPacket[:13])
+                packetData = currentPacket[14:]
+
                 print "packetData " + str(packetData)
                 fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
