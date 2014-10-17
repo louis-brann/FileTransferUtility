@@ -131,7 +131,7 @@ def main(argv):
 
         dataToSend = [None] * numWindows
         for i in range(numWindows):
-            dataToSend = inFile.read(windowSize * i)
+            dataToSend = inFile.read(windowSize)
 
             #dataToSend = pickle.dumps(dataToSend)
 
