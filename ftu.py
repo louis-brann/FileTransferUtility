@@ -6,6 +6,7 @@ import socket, select
 import pickle
 import copy
 import math
+import re
 
 
 def getMissingPackets(fileBuffer):
@@ -27,11 +28,6 @@ def getMissingPackets(fileBuffer):
 def main(argv):
     udpPort  = 44000
     tcpPort  = 44001
-    louieIP  = "134.173.42.215"
-    benIP    = "134.173.42.9"
-    filePath = "/Users/Guest/Desktop/FileTransferUtility/random.txt"
-    fileName = "random.txt"
-    allDone  = False
     packetSize = 1024
     
     #Receiver
@@ -104,10 +100,16 @@ def main(argv):
 
     #Sender
     else:
+
+        fileName = "random.txt"
         #parse command line inputs
         if len(argv) == 2:
             source = argv[0]
+            fileName = source[source.find(":") + 1:]
+
             dest = argv[1]
+            destHostname = dest[0:dest.find(":")]
+            destIP = socket.gethostbyname(destHostname)
         else:
             print 'ftu.py <source> <dest>'
             sys.exit(2)
@@ -118,7 +120,7 @@ def main(argv):
 
         #make TCP socket
         tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcpSocket.connect((benIP, tcpPort))
+        tcpSocket.connect((destIP, tcpPort))
 
         #Open file and put data into dataToSend
         inFile = open(fileName, 'r')
@@ -146,7 +148,7 @@ def main(argv):
         while missingPackets != "1" * numPackets:
             #UDP: send pickled data
             if missingPackets[packetCounter] == "0":
-                udpSocket.sendto(packetsToSend[packetCounter], (benIP,udpPort))
+                udpSocket.sendto(packetsToSend[packetCounter], (destIP,udpPort))
 
             # Increment packet counter
             packetCounter += 1
@@ -160,7 +162,7 @@ def main(argv):
                 missingPackets = pickle.loads(missingPacketsPickled)
 
                 numMissing = missingPackets.count("0")
-                print "%" + "done: " + str(numMissing/numPackets)
+                print "%" + " done: " + str(1 - float(numMissing)/numPackets)
 
                 # Reset for next set of packets to send
                 packetCounter = 0
