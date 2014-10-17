@@ -4,10 +4,25 @@
 import socket
 import pickle
 import copy
-import sys
-import numpy
-import os
+import sys, os
 import math
+import select
+
+def getMissingPackets(fileBuffer):
+    """
+    Input: Array of packets
+    Output: Bitstring, if ith char is 0, that packet is missing.
+                       if ith char is 1, that packet is present.
+    """
+    missingPackets = ""
+    
+    for packet in fileBuffer:
+        if packet == None:
+            missingPackets += "0"
+        else:
+            missingPackets += "1"
+
+    return missingPackets
 
 def main(argv):
     udpPort  = 44000
@@ -29,6 +44,7 @@ def main(argv):
         #make TCP socket
         tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcpSocket.bind(("", tcpPort))
+        tcpSocket.setblocking(0)
         tcpSocket.listen(1)
 
         #TCP: Accept incoming handshake 
@@ -43,7 +59,7 @@ def main(argv):
         #Make datastructures to put data from udpSocket
         fileName, fileSize = fileMetadata
         numPackets = math.ceil(float(fileSize) / float(packetSize))
-        fileBuffer = [numPackets]
+        fileBuffer = [None] * numPackets
         while True:
             # Receive packet
             currentPacketPickled, addr = udpSocket.recvfrom(1024)
@@ -52,8 +68,30 @@ def main(argv):
             # Put packet data into file buffer
             packetIndex, packetData = currentPacket
             fileBuffer[packetIndex] = copy.deepcopy(packetData)
-           
-            break
+
+            # Check for done signal
+            ready = select.select([tcpSocket], [], [], .01)
+            if ready[0]:
+                data = tcpSocket.recv(1024)
+                allDone = 1
+
+            # If we receive "done" signal
+            if allDone:
+                #check which packets are missing
+                missingPackets = checkMissingPackets(fileBuffer)
+
+                #send this information to sender as bitset
+                missingPacketsPickled = pickle.dumps(missingPackets)
+                tcpSocket.send(missingPacketsPickled)
+
+                #if we have received all data, break and close connections
+                if int(missingPackets) == 0:
+                    break
+
+        # Close all connections
+        socket.shutdown(tcpSocket)
+        socket.close(tcpSocket)
+        socket.close(udpSocket)
 
         print fileBuffer
 
@@ -76,6 +114,7 @@ def main(argv):
 
         #make TCP socket
         tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcpSocket.setblocking(0)
         tcpSocket.connect((benIP, tcpPort))
 
         #get filesize
