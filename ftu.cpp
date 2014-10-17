@@ -171,16 +171,18 @@ int receivePacket(int udpFd, struct addrinfo *udpInfo, char *receivedPackets[])
 
     // Convert string to cstr to copy into array of packetes
     string actualMsg = msgStr.substr(spacePos+1);
-    char *receivedPacket = const_cast<char *>(actualMsg.c_str());
+    const char *receivedPacket = actualMsg.c_str();
 
     strncpy( receivedPackets[packetIndex] , receivedPacket, actualMsg.length());
+
+    receivedPackets[packetIndex] = receivedPacket;
+
+    //strncpy( receivedPackets[packetIndex] , receivedPacket, actualMsg.length());=
     
     cout << "received packet: " << receivedPackets[0] << endl;
 
     return received;
 }
-
-
 
 // Loop through buffer checking what packets are missing
 string getMissedPackets(int totalPackets, char *receivedPackets[])
@@ -235,6 +237,7 @@ int main(int argc, const char* argv[])
     {
         servName = dest.substr(0, colonPos);
         destFile = dest.substr(colonPos+1);
+<<<<<<< HEAD
 
         cout << "destFile before file check: " << destFile << endl;
 
@@ -260,6 +263,22 @@ int main(int argc, const char* argv[])
     // Set up the dest file to have the same name as the original file
     
     cout << "Filename: " << destFile << endl;
+=======
+        
+        // If the dest file 
+        int srcColonPos = source.find(":");
+        string origFileName = "";
+        if (srcColonPos == -1)
+        {
+            origFileName = source;
+        }
+        else 
+        {
+            origFileName = source.substr(srcColonPos+1);
+        }
+        destFile += origFileName;
+    }
+>>>>>>> f1410d8954cf1f045dc61c9574aa777c652d7735
     
     
 
@@ -393,12 +412,17 @@ int main(int argc, const char* argv[])
             // UDP: Receive ALL packets
             // TODO: update for buffer not entire file
             int windowOffset = 0;
-            int bytesRead = 0;
+            int bytesRead = 0;`
             char *receivedPackets[totalPackets];
             // for (int i = 0; i < totalPackets; ++i)
             // {
             //     receivedPackets[totalPackets] = (char *)malloc(packetSize);
             // }
+<<<<<<< HEAD
+=======
+            ofstream outFile;
+            outFile.open(destFile, ios::out|ios::binary|ios::ate);
+>>>>>>> f1410d8954cf1f045dc61c9574aa777c652d7735
 
             ofstream outFile;
             cout << "destfile: " << destFile << endl;
@@ -446,7 +470,7 @@ int main(int argc, const char* argv[])
                     } 
                     // Otherwise, send what we're missing
                     else 
-                    {
+                    { 
                         missingPackets = getMissedPackets(totalPackets, receivedPackets);
                         send(establishedTcpFd, &missingPackets, sizeof missingPackets, 0);
                         break;
