@@ -126,9 +126,10 @@ def main(argv):
 
             dest = argv[1]
             colonPos = dest.find(":")
+            destFileName = fileName
             destHostname = dest[0:colonPos]
             if colonPos != len(dest) - 1:
-                fileName = dest[colonPos+1:]
+                destFileName = dest[colonPos+1:]
             elif colonPos == -1:
                 print "No destHostname specified."
             destIP = socket.gethostbyname(destHostname)
@@ -164,7 +165,7 @@ def main(argv):
                 packetsToSend[j] = indexStr + " " + dataToSend[dataOffset:dataOffset + stepSize]
 
             #TCP: Send fileName and numPackets to send
-            fileMetadata = (fileName, numPackets, numWindows)
+            fileMetadata = (destFileName, numPackets, numWindows)
             fileMetadataPickled = pickle.dumps(fileMetadata)
             tcpSocket.send(fileMetadataPickled)
 
