@@ -125,7 +125,12 @@ def main(argv):
             fileName = source[source.find(":") + 1:]
 
             dest = argv[1]
-            destHostname = dest[0:dest.find(":")]
+            colonPos = dest.find(":")
+            destHostname = dest[0:colonPos]
+            if colonPos != len(dest) - 1:
+                fileName = dest[colonPos+1:]
+            elif colonPos == -1:
+                print "No destHostname specified."
             destIP = socket.gethostbyname(destHostname)
         else:
             print 'ftu.py <source> <dest>'
