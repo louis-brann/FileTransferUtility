@@ -70,10 +70,13 @@ def main(argv):
             fileName, numPackets, numWindows = fileMetadata
             print "numWindows: " + str(numWindows)
             fileBuffer = [None] * numPackets
+            udpTimeoutCounter = 0
             while True:
                 print "looping!"
                 # If there is a packet, receive it
-                udpReady = select.select([udpSocket], [], [], 0.018)
+
+                udpReady = select.select([udpSocket], [], [], .018)
+
                 if udpReady[0]:
                     print "got udp!"
                     currentPacket, addr = udpSocket.recvfrom(packetSize)
@@ -85,9 +88,19 @@ def main(argv):
 
                     fileBuffer[packetIndex] = copy.deepcopy(packetData)
 
+                    udpTimeoutCounter = 0
+                    continue
+
                     print "endof getting udp"
 
-                # Check for done signal
+                # If we've only timed out once or twice, start loop over
+                udpTimeoutCounter += 1
+                if udpTimeoutCounter < 3:
+                    continue
+
+                udpTimeoutCounter = 0
+
+                # Else, we are ready to check for done signal
                 tcpReady = select.select([establishedTcp], [], [], .018)
                 if tcpReady[0]:
                     data = establishedTcp.recv(packetSize)
