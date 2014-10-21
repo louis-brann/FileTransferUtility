@@ -98,28 +98,38 @@ def main(argv):
                 if udpTimeoutCounter < 3:
                     continue
 
-                udpTimeoutCounter = 0
+                # If we've timed out more than twice, send missing packets
+                #check which packets are missing
+                missingPackets = getMissingPackets(fileBuffer)
 
-                # Else, we are ready to check for done signal
-                tcpReady = select.select([establishedTcp], [], [], .018)
-                if tcpReady[0]:
-                    data = establishedTcp.recv(packetSize)
+                establishedTcp.send(missingPackets)
 
-                    #check which packets are missing
-                    missingPackets = getMissingPackets(fileBuffer)
+                #     #if we have received all data, break and close connections
+                if "0" not in missingPackets:
+                    print "no missing packets"
+                    currentWindow += 1
+                    break
 
-                    print "missing packets: " + missingPackets
+                # # Else, we are ready to check for done signal
+                # tcpReady = select.select([establishedTcp], [], [], .018)
+                # if tcpReady[0]:
+                #     data = establishedTcp.recv(packetSize)
+
+                #     #check which packets are missing
+                #     missingPackets = getMissingPackets(fileBuffer)
+
+                #     print "missing packets: " + missingPackets
 
                     
 
-                    #send this information to sender as bitset
-                    establishedTcp.send(missingPackets)
+                #     #send this information to sender as bitset
+                #     establishedTcp.send(missingPackets)
 
-                    #if we have received all data, break and close connections
-                    if "0" not in missingPackets:
-                        print "no missing packets"
-                        currentWindow += 1
-                        break
+                #     #if we have received all data, break and close connections
+                #     if "0" not in missingPackets:
+                #         print "no missing packets"
+                #         currentWindow += 1
+                #         break
 
             # Close all connections
             # socket.shutdown(tcpSocket)
