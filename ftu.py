@@ -68,10 +68,9 @@ def main(argv):
             fileBuffer = [None] * numPackets
             udpTimeoutCounter = 0
             while True:
-                print "looping!"
                 # If there is a packet, receive it
 
-                udpReady = select.select([udpSocket], [], [], .018)
+                udpReady = select.select([udpSocket], [], [], .006)
 
                 if udpReady[0]:
                     currentPacket, addr = udpSocket.recvfrom(packetSize)
