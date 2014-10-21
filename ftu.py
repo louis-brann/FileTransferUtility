@@ -29,7 +29,7 @@ def main(argv):
     udpPort  = 44000
     tcpPort  = 44001
     packetSize = 1024
-    windowSize = 32 * packetSize
+    windowSize = 256 * packetSize
     
     #Receiver
     if len(argv) == 0:
