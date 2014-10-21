@@ -204,8 +204,8 @@ def main(argv):
 
                 # If all packets are sent, send all done message
                 if packetCounter == numPackets:
-                    tcpSocket.send("All done")
-                    print "Sent all done!"
+                    # tcpSocket.send("All done")
+                    # print "Sent all done!"
 
                     # Receive list of missed packets
                     missingPackets = tcpSocket.recv(packetSize)
