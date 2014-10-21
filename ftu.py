@@ -73,7 +73,7 @@ def main(argv):
             while True:
                 print "looping!"
                 # If there is a packet, receive it
-                udpReady = select.select([udpSocket], [], [], 1)
+                udpReady = select.select([udpSocket], [], [], 0.018)
                 if udpReady[0]:
                     print "got udp!"
                     currentPacket, addr = udpSocket.recvfrom(packetSize)
@@ -88,7 +88,7 @@ def main(argv):
                     print "endof getting udp"
 
                 # Check for done signal
-                tcpReady = select.select([establishedTcp], [], [], .01)
+                tcpReady = select.select([establishedTcp], [], [], .018)
                 if tcpReady[0]:
                     data = establishedTcp.recv(packetSize)
 
