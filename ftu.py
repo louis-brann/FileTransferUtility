@@ -3,6 +3,7 @@
 
 import sys, os
 import socket, select
+import subprocess
 import pickle
 import copy
 import math
@@ -25,6 +26,19 @@ def getMissingPackets(fileBuffer):
 
     return missingPackets
 
+def getRTT(destName):
+    """ 
+    Input: String name of host to ping
+    Output: Average of 3 roundtrip times to communicate with that host, in seconds
+    """
+    pingMsg = "ping -c 3 " + destName
+
+    process = subprocess.Popen(pingMsg, shell=True, stdout=subprocess.PIPE)
+    pingResult = process.communicate()[0]
+    rttAvgMs = int(pingResult.split(" ")[-2].split("/")[1])
+
+    return float(rttAvgMs)/float(1000)
+
 def main(argv):
     udpPort  = 44000
     tcpPort  = 44001
@@ -46,6 +60,8 @@ def main(argv):
 
         #TCP: Accept incoming handshake 
         establishedTcp, addr = tcpSocket.accept()
+        rtt = getRTT(addr)
+        print "RTT: " + str(rtt)
 
         currentWindow = 0
         numWindows = 2
@@ -70,7 +86,7 @@ def main(argv):
             while True:
                 # If there is a packet, receive it
 
-                udpReady = select.select([udpSocket], [], [], .006)
+                udpReady = select.select([udpSocket], [], [], rtt)
 
                 if udpReady[0]:
                     currentPacket, addr = udpSocket.recvfrom(packetSize)
