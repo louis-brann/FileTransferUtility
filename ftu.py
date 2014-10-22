@@ -44,7 +44,8 @@ def main(argv):
     udpPort  = 44000
     tcpPort  = 44001
     packetSize = 1024
-    windowSize = 256 * packetSize
+    packetsPerWindow = 512
+    windowSize = packetsPerWindow * packetSize
     
     #Receiver
     if len(argv) == 0:
@@ -203,7 +204,7 @@ def main(argv):
                 if packetCounter == numPackets:
 
                     # Receive list of missed packets
-                    missingPackets = tcpSocket.recv(260)
+                    missingPackets = tcpSocket.recv(packetsPerWindow + packetsPerWindow/64)
 
                     numMissing = missingPackets.count("0")
                     print "num missing packets: " + str(numMissing)
