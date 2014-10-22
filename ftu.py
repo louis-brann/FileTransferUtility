@@ -31,7 +31,6 @@ def getRTT(destName):
     Input: String name of host to ping
     Output: Average of 3 roundtrip times to communicate with that host, in seconds
     """
-    print destName
     pingMsg = "ping -c 3 " + destName
 
     process = subprocess.Popen(pingMsg, shell=True, stdout=subprocess.PIPE)
@@ -111,8 +110,6 @@ def main(argv):
                 # If we've timed out more than twice, send missing packets
                 #check which packets are missing
                 missingPackets = getMissingPackets(fileBuffer)
-                print "num packets: " + str(len(missingPackets))
-                print "num packets missing: " + str(missingPackets.count("0"))
                 establishedTcp.send(missingPackets)
 
                 #     #if we have received all data, break and close connections
@@ -207,7 +204,6 @@ def main(argv):
                     missingPackets = tcpSocket.recv(packetsPerWindow + packetsPerWindow/64)
 
                     numMissing = missingPackets.count("0")
-                    print "num missing packets: " + str(numMissing)
                     print "%" + " done: " + str(float(i)/float(numWindows))
 
                     # Reset for next set of packets to send
