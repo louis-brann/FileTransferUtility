@@ -93,7 +93,8 @@ def main(argv):
                 # If we've timed out more than twice, send missing packets
                 #check which packets are missing
                 missingPackets = getMissingPackets(fileBuffer)
-
+                print "num packets: " + str(len(missingPackets))
+                print "num packets missing: " + str(missingPackets.count("0"))
                 establishedTcp.send(missingPackets)
 
                 #     #if we have received all data, break and close connections
@@ -185,9 +186,10 @@ def main(argv):
                 if packetCounter == numPackets:
 
                     # Receive list of missed packets
-                    missingPackets = tcpSocket.recv(packetSize)
- 
+                    missingPackets = tcpSocket.recv(260)
+
                     numMissing = missingPackets.count("0")
+                    print "num missing packets: " + str(numMissing)
                     print "%" + " done: " + str(float(i)/float(numWindows))
 
                     # Reset for next set of packets to send
