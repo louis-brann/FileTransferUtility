@@ -188,6 +188,7 @@ def main(argv):
             # Go through entire file, sending all packets until known to be transferred
             packetCounter = 0
             missingPackets = "0" * numPackets
+            bufSize = packetsPerWindow + packetsPerWindow/64
             while missingPackets != "1" * numPackets:
 
                 #UDP: send pickled data
