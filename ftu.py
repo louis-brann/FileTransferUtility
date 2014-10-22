@@ -61,7 +61,6 @@ def main(argv):
         #TCP: Accept incoming handshake 
         establishedTcp, addr = tcpSocket.accept()
         rtt = getRTT(addr)
-        print "RTT: " + str(rtt)
 
         currentWindow = 0
         numWindows = 2
