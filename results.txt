@@ -1,0 +1,27 @@
+
+Link Parameters - Size of File: Time Elapsed - Throughput
+
+10 ms delay, 1% packet loss - 10 MB: 0m2.323s - 4.3 MB/s *** file was corrupted 
+10 ms delay, 1% packet loss - 1 GB: 12m1.318s - 1.39 MB/s
+
+200 ms delay, 20% packet loss - 10 MB: 
+200 ms delay, 20% packet loss -
+
+Attempted Optimizations 
+-----------------------
+5*RTT timeout: 10 ms delay, 1% packet loss - 1 GB:  - 1.39 MB/s
+window size: 9 packets - 1 GB: 0m31s for 2% --> ~25min total --> horrible throughput
+
+
+Window Size: 512 packets
+------------------------
+10 ms delay, 1% packet loss - 1 GB:  for 10% --> ~10 min --> slightly better
+10 ms delay, 1% packet loss - 1 GB:  for 10% --> ~10 min --> slightly better
+
+
+
+
+
+
+
+
