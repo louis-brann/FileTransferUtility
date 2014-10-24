@@ -191,11 +191,12 @@ def main(argv):
             packetCounter = 0
             missingPackets = "0" * numPackets
             bufSize = packetsPerWindow + packetsPerWindow/64
-            print "Max packets should be: " + str(numPackets)
             while missingPackets != "1" * numPackets:
-                print "packetCounter is: " + str(packetCounter)
 
                 #UDP: send pickled data
+                if packetCounter >= len(missingPackets):
+                    print "missingPackets len: " + str(len(missingPackets))
+                    break;
                 if missingPackets[packetCounter] == "0":
                     udpSocket.sendto(packetsToSend[packetCounter], (destIP,udpPort))
 
