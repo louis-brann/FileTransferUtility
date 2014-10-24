@@ -110,6 +110,9 @@ def main(argv):
                 # If we've timed out more than twice, send missing packets
                 #check which packets are missing
                 missingPackets = getMissingPackets(fileBuffer)
+                if len(missingPackets) < 520:
+                    print "missingPackets len: " + str(len(missingPackets))
+                    print "fileBuffer size: " + len(fileBuffer)
                 establishedTcp.send(missingPackets)
 
                 #     #if we have received all data, break and close connections
