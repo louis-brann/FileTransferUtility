@@ -133,6 +133,8 @@ def main(argv):
 
             outFile.write(outString)
 
+        print "Wrote: " + str(fileName) + " of size: " + str(os.path.getsize(outFile.name))
+
     #Sender
     else:
         #parse command line inputs
@@ -189,7 +191,9 @@ def main(argv):
             packetCounter = 0
             missingPackets = "0" * numPackets
             bufSize = packetsPerWindow + packetsPerWindow/64
+            print "Max packets should be: " + str(numPackets)
             while missingPackets != "1" * numPackets:
+                print "packetCounter is: " + str(packetCounter)
 
                 #UDP: send pickled data
                 if missingPackets[packetCounter] == "0":
@@ -209,6 +213,8 @@ def main(argv):
 
                     # Reset for next set of packets to send
                     packetCounter = 0
+
+        print "Transferred: " + str(fileName) + " of size: " + str(fileSize)
 
 
 
