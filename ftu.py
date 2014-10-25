@@ -197,9 +197,13 @@ def main(argv):
                 #UDP: send pickled data
                 if packetCounter >= len(missingPackets):
                     print "missingPackets len: " + str(len(missingPackets))
-                    break;
+                    break
                 if missingPackets[packetCounter] == "0":
-                    udpSocket.sendto(packetsToSend[packetCounter], (destIP,udpPort))
+                    udpReady = select.select([], [udpSocket], [], 1)
+                    if udpReady[1]:
+                        udpSocket.sendto(packetsToSend[packetCounter], (destIP,udpPort))
+                    else:
+                        continue
 
                 # Increment packet counter
                 packetCounter += 1
