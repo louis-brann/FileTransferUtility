@@ -43,7 +43,7 @@ def main(argv):
     udpPort  = 44000
     tcpPort  = 44001
     packetSize = 1024
-    packetsPerWindow = 128
+    packetsPerWindow = 512
     windowSize = packetsPerWindow * packetSize
     
     #Receiver
