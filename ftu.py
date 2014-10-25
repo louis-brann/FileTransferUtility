@@ -120,11 +120,6 @@ def main(argv):
                     currentWindow += 1
                     break
 
-            # Close all connections
-            tcpSocket.close()
-            establishedTcp.close()
-            udpSocket.close()
-
             outString = "".join(fileBuffer)
 
             if currentWindow - 1 == 0:
@@ -134,6 +129,10 @@ def main(argv):
 
             outFile.write(outString)
 
+        # Close all connections                                             
+        tcpSocket.close()
+        establishedTcp.close()
+        udpSocket.close()
         print "Wrote: " + str(fileName) + " of size: " + str(os.path.getsize(outFile.name))
 
     #Sender
