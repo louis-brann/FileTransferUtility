@@ -43,7 +43,7 @@ def main(argv):
     udpPort  = 44000
     tcpPort  = 44001
     packetSize = 1024
-    packetsPerWindow = 512
+    packetsPerWindow = 64
     windowSize = packetsPerWindow * packetSize
     
     #Receiver
@@ -198,9 +198,12 @@ def main(argv):
                     print "missingPackets len: " + str(len(missingPackets))
                     break
                 if missingPackets[packetCounter] == "0":
-                    udpReady = select.select([], [udpSocket], [], 1)
+                    udpReady = select.select([], [udpSocket], [])
                     if udpReady[1]:
-                        udpSocket.sendto(packetsToSend[packetCounter], (destIP,udpPort))
+                        try:
+                            udpSocket.sendto(packetsToSend[packetCounter], (destIP,udpPort))
+                        except socket.error:
+                            continue
                     else:
                         continue
 
