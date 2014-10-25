@@ -121,9 +121,9 @@ def main(argv):
                     break
 
             # Close all connections
-            socket.close(tcpSocket)
-            socket.close(establishedTcp)
-            socket.close(udpSocket)
+            tcpSocket.close()
+            establishedTcp.close()
+            udpSocket.close()
 
             outString = "".join(fileBuffer)
 
@@ -217,8 +217,8 @@ def main(argv):
                     packetCounter = 0
 
          # Close all connections                                             
-        socket.close(tcpSocket)
-        socket.close(udpSocket)
+        tcpSocket.close()
+        udpSocket.close()
         print "Transferred: " + str(fileName) + " of size: " + str(fileSize)
 
 
