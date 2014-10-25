@@ -43,7 +43,7 @@ def main(argv):
     udpPort  = 44000
     tcpPort  = 44001
     packetSize = 1024
-    packetsPerWindow = 512
+    packetsPerWindow = 128
     windowSize = packetsPerWindow * packetSize
     
     #Receiver
@@ -110,9 +110,9 @@ def main(argv):
                 # If we've timed out more than twice, send missing packets
                 #check which packets are missing
                 missingPackets = getMissingPackets(fileBuffer)
-                if len(missingPackets) < 520:
+                if len(missingPackets) < packetsPerWindow:
                     print "missingPackets len: " + str(len(missingPackets))
-                    print "fileBuffer size: " + len(fileBuffer)
+                    print "fileBuffer size: " + str(len(fileBuffer))
                 establishedTcp.send(missingPackets)
 
                 #     #if we have received all data, break and close connections
@@ -121,11 +121,9 @@ def main(argv):
                     break
 
             # Close all connections
-            # socket.shutdown(tcpSocket)
-            # socket.close(tcpSocket)
-            #socket.shutdown(establishedTcp)
-            #socket.close(establishedTcp)
-            #socket.close(udpSocket)
+            socket.close(tcpSocket)
+            socket.close(establishedTcp)
+            socket.close(udpSocket)
 
             outString = "".join(fileBuffer)
 
@@ -218,6 +216,9 @@ def main(argv):
                     # Reset for next set of packets to send
                     packetCounter = 0
 
+         # Close all connections                                             
+        socket.close(tcpSocket)
+        socket.close(udpSocket)
         print "Transferred: " + str(fileName) + " of size: " + str(fileSize)
 
 
